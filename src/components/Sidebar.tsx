@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { EmployeeCategory } from "@/types/employee";
@@ -40,7 +41,7 @@ function IconPT() {
   );
 }
 
-const CATEGORIES: { key: EmployeeCategory; label: string; Icon: () => JSX.Element }[] = [
+const CATEGORIES: { key: EmployeeCategory; label: string; Icon: () => React.ReactElement }[] = [
   { key: "sales",   label: "Sales",   Icon: IconSales   },
   { key: "trainer", label: "Trainer", Icon: IconTrainer },
   { key: "pt",      label: "PT Team", Icon: IconPT      },
@@ -97,7 +98,7 @@ export default function Sidebar({ counts }: SidebarProps) {
 function NavItem({
   href, label, Icon, isActive, badge,
 }: {
-  href: string; label: string; Icon: () => JSX.Element; isActive: boolean; badge?: number;
+  href: string; label: string; Icon: () => React.ReactElement; isActive: boolean; badge?: number;
 }) {
   return (
     <Link

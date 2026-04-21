@@ -5,9 +5,10 @@ interface TokenResponse {
   deviceToken: string;
 }
 
-// In-memory token cache (process lifetime)
-let tokenCache: (TokenResponse & { expiresAt: number }) | null = null;
 const TOKEN_TTL_MS = 50 * 60 * 1000; // 50 minutes
+
+// Token cache for incidents / feedback / PIP / utilization APIs
+let tokenCache: (TokenResponse & { expiresAt: number }) | null = null;
 
 export async function getAuthTokens(): Promise<TokenResponse> {
   const now = Date.now();
@@ -38,6 +39,40 @@ export async function getAuthTokens(): Promise<TokenResponse> {
   };
 
   return { accessToken: tokenCache.accessToken, deviceToken: tokenCache.deviceToken };
+}
+
+// Separate token cache for the employee directory API (role=NJ)
+let employeeTokenCache: (TokenResponse & { expiresAt: number }) | null = null;
+
+async function getEmployeeAuthTokens(): Promise<TokenResponse> {
+  const now = Date.now();
+  if (employeeTokenCache && employeeTokenCache.expiresAt > now) {
+    return { accessToken: employeeTokenCache.accessToken, deviceToken: employeeTokenCache.deviceToken };
+  }
+
+  const res = await fetch(`${BASE_URL}/api/Kites/Operator/GetToken`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      userName: process.env.RMS_EMPLOYEE_USERNAME || "Sakshi",
+      userPassword: process.env.RMS_EMPLOYEE_PASSWORD || "Sakshi@123",
+      userRole: process.env.RMS_EMPLOYEE_ROLE || "NJ",
+    }),
+    cache: "no-store",
+  });
+
+  if (!res.ok) throw new Error(`GetToken (employee) failed: ${res.status}`);
+
+  const data = await res.json();
+  if (data.statuscode !== 200) throw new Error(`GetToken (employee) error: ${data.message}`);
+
+  employeeTokenCache = {
+    accessToken: data.content.accessToken,
+    deviceToken: data.content.deviceToken,
+    expiresAt: now + TOKEN_TTL_MS,
+  };
+
+  return { accessToken: employeeTokenCache.accessToken, deviceToken: employeeTokenCache.deviceToken };
 }
 
 export async function fetchFeedbackData(startDate: string, endDate: string, employeeName = "") {
@@ -175,4 +210,35 @@ export interface RawPIPRecord {
   Type: "PIP" | "Performance Alert";  // API returns these two values
   InitaitedBy: string;
   ResignationDate: string;
+}
+
+// Employee Directory API — apikey=47, date-range bulk fetch
+export async function fetchEmployeeListData(from: string, to: string): Promise<RawEmployeeRecord[]> {
+  const { accessToken, deviceToken } = await getEmployeeAuthTokens();
+  const encodedToken = encodeURIComponent(accessToken);
+
+  const url = `${BASE_URL}/api/Kites/Operator/common?apikey=47&accessToken=${encodedToken}&deviceToken=${deviceToken}`;
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ From: from, To: to }),
+    cache: "no-store",
+  });
+
+  if (!res.ok) throw new Error(`Employee API failed: ${res.status}`);
+
+  const data = await res.json();
+  if (data.statuscode !== 200) throw new Error(`Employee API error: ${data.message}`);
+
+  // content is a JSON string — must parse
+  const content = typeof data.content === "string" ? JSON.parse(data.content) : data.content;
+  return (content ?? []) as RawEmployeeRecord[];
+}
+
+export interface RawEmployeeRecord {
+  EmpID: number;
+  "Employee Name": string;
+  "Joining Date": string;  // "2026-03-31T00:00:00"
+  "Manager Name": string;
 }

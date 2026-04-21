@@ -3,10 +3,10 @@ import KPICards from "@/components/overview/KPICards";
 import TeamSummaryCards from "@/components/overview/TeamSummaryCards";
 import Charts from "@/components/overview/Charts";
 import { getTenureBand, categoryLabel, categoryIcon } from "@/lib/utils";
-import { MOCK_EMPLOYEES } from "@/lib/mock-data";
+import { getEmployees } from "@/lib/data";
 
-function getOverviewData() {
-  const employees = MOCK_EMPLOYEES;
+async function getOverviewData() {
+  const employees = await getEmployees();
   const overall: OverviewStats = {
     total:      employees.length,
     confirmed:  employees.filter((e) => e.finalStatus === "Confirmed").length,
@@ -34,8 +34,8 @@ function getOverviewData() {
   return { overall, teamStats, tenure };
 }
 
-export default function OverviewPage() {
-  const { overall, teamStats, tenure } = getOverviewData();
+export default async function OverviewPage() {
+  const { overall, teamStats, tenure } = await getOverviewData();
   return (
     <div className="flex-1 p-6 space-y-5">
       <div className="mb-2">

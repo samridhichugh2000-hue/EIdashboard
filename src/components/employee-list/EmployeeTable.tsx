@@ -13,13 +13,16 @@ function PIPChip({ pipStatus }: { pipStatus: PIPStatus | null }) {
   if (!pipStatus) {
     return (
       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-teal-50 text-teal-700 border border-teal-100">
-        Not Active
+        None
       </span>
     );
   }
+  const isPIP = pipStatus.type === "PIP";
   return (
-    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-50 text-red-700 border border-red-100">
-      Active
+    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
+      isPIP ? "bg-red-50 text-red-700 border-red-100" : "bg-amber-50 text-amber-700 border-amber-100"
+    }`}>
+      {pipStatus.type} Active
     </span>
   );
 }

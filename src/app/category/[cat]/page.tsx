@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { MOCK_EMPLOYEES } from "@/lib/mock-data";
+import { getEmployees } from "@/lib/data";
 import { categoryLabel } from "@/lib/utils";
 import { EmployeeCategory } from "@/types/employee";
 import EmployeeTable from "@/components/employee-list/EmployeeTable";
@@ -19,7 +19,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
   if (!VALID_CATEGORIES.includes(cat as EmployeeCategory)) notFound();
 
   const category = cat as EmployeeCategory;
-  const employees = MOCK_EMPLOYEES.filter((e) => e.category === category);
+  const employees = await getEmployees(category);
 
   return (
     <div className="flex-1 p-6 space-y-5">

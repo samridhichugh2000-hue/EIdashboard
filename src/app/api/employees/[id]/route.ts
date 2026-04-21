@@ -1,17 +1,40 @@
 import { NextResponse } from "next/server";
-import { MOCK_EMPLOYEES } from "@/lib/mock-data";
+import { getTursoClient } from "@/lib/turso";
+import { Employee, EmployeeCategory, FinalStatus } from "@/types/employee";
+import { computeTenureDays } from "@/lib/utils";
 
-// GET /api/employees/[id]
-// Returns full employee detail object (used by modal)
+// GET /api/employees/[id]  e.g. /api/employees/EMP3930
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
   try {
-    // TODO: Replace mock with real API + Turso cache lookup
-    const employee = MOCK_EMPLOYEES.find((e) => e.employeeId === id);
-    if (!employee) {
+    const db = getTursoClient();
+    const result = await db.execute({
+      sql: "SELECT employee_id, name, category, doj, reporting_manager, final_status FROM employees WHERE employee_id = ?",
+      args: [id],
+    });
+
+    if (result.rows.length === 0) {
       return NextResponse.json({ success: false, error: "Employee not found" }, { status: 404 });
     }
+
+    const r = result.rows[0];
+    const doj = r.doj as string;
+    const employee: Employee = {
+      employeeId:       r.employee_id as string,
+      name:             r.name as string,
+      category:         r.category as EmployeeCategory,
+      doj,
+      tenureDays:       computeTenureDays(doj),
+      reportingManager: r.reporting_manager as string,
+      feedback:         { d30: null, d60: null, d90: null },
+      nrData:           [],
+      utilization:      [],
+      pipStatus:        null,
+      hrIncidents:      [],
+      finalStatus:      (r.final_status as string) as FinalStatus,
+    };
+
     return NextResponse.json({ success: true, data: employee });
   } catch (err) {
     console.error("employee detail route error:", err);

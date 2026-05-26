@@ -30,7 +30,7 @@ export async function GET(request: Request) {
   });
 
   if (cached.rows.length > 0) {
-    const data: NREntry[] = (cached.rows as { month: string; val: number }[])
+    const data: NREntry[] = (cached.rows as unknown as { month: string; val: number }[])
       .sort((a, b) => parseMonth(b.month) - parseMonth(a.month))
       .slice(0, 3)
       .map((r) => ({ month: r.month, val: r.val }));

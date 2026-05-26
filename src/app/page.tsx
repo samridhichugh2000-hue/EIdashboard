@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { Suspense } from "react";
 import { OverviewStats, TeamStats, Employee } from "@/types/employee";
 import KPICards from "@/components/overview/KPICards";

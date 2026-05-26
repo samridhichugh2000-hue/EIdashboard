@@ -38,6 +38,7 @@ export interface Employee {
   doj: string; // ISO date string
   tenureDays: number;
   reportingManager: string;
+  department: string;
   feedback: {
     d30: FeedbackEntry | null;
     d60: FeedbackEntry | null;

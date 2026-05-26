@@ -35,7 +35,6 @@ export function formatIndianNumber(val: number): string {
 }
 
 export function formatDate(dateStr: string): string {
-  // Accepts ISO or "DD Mon YYYY" — returns "DD Mon YYYY"
   const d = new Date(dateStr);
   if (isNaN(d.getTime())) return dateStr;
   return d.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
@@ -69,7 +68,7 @@ export function inferMilestone(dojStr: string, feedbackDateStr: string): "d30" |
   return null;
 }
 
-// Parse "DD Mon YYYY" → Date
+// Parse "DD Mon YYYY" or ISO date string → Date
 export function parseDateOfFb(dateStr: string): Date | null {
   try {
     const d = new Date(dateStr);
@@ -78,6 +77,35 @@ export function parseDateOfFb(dateStr: string): Date | null {
   } catch {
     return null;
   }
+}
+
+// Fix UTF-8 text decoded as Latin-1 (mojibake) and strip HTML from API feedback
+// The bullet char U+2022 (UTF-8: E2 80 A2) appears as U+00E2 U+0080 U+00A2 when misread as Latin-1
+export function cleanFeedbackText(text: string | null | undefined): string {
+  if (!text) return "";
+  return text
+    .replace(/â¢\s*/g, "• ") // bullet •
+    .replace(/â/g, "‘")      // left single quote
+    .replace(/â/g, "’")      // right single quote
+    .replace(/â/g, "“")      // left double quote
+    .replace(/â/g, "”")      // right double quote
+    .replace(/â/g, "–")      // en-dash
+    .replace(/â/g, "—")      // em-dash
+    .replace(/<br\s*\/?>/gi, "\n")                  // <br /> to newline
+    .replace(/<[^>]+>/g, "")                        // strip remaining HTML tags
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&nbsp;/g, " ")
+    .replace(/\n{3,}/g, "\n\n")                    // collapse 3+ newlines
+    .trim();
+}
+
+// ISO date → "DD-Mon-YYYY" for API calls (e.g. "2026-01-26" → "26-Jan-2026")
+export function isoToApiDate(isoDate: string): string {
+  const d = new Date(isoDate);
+  if (isNaN(d.getTime())) return isoDate;
+  return d.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }).replace(/ /g, "-");
 }
 
 // 4 months ago date as "DD-Mon-YYYY" for API calls

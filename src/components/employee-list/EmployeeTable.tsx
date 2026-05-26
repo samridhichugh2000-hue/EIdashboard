@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Employee, PIPStatus } from "@/types/employee";
 import { formatDate, getTenureBadgeClass, getStatusChipClass } from "@/lib/utils";
 import EmployeeModal from "@/components/modal/EmployeeModal";
@@ -8,6 +9,14 @@ import IncidentBadge from "@/components/IncidentBadge";
 import StatsRow from "./StatsRow";
 
 interface EmployeeTableProps { employees: Employee[]; }
+
+// "1 Apr 2026" or "30 Apr 2026" → Date (API returns D MMM YYYY)
+function parsePIPDate(dateStr: string): Date | null {
+  if (!dateStr) return null;
+  const parts = dateStr.trim().split(" ");
+  if (parts.length === 3) return new Date(`${parts[1]} ${parts[0]}, ${parts[2]}`);
+  return new Date(dateStr); // fallback: try native
+}
 
 function PIPChip({ pipStatus }: { pipStatus: PIPStatus | null }) {
   if (!pipStatus) {
@@ -18,16 +27,29 @@ function PIPChip({ pipStatus }: { pipStatus: PIPStatus | null }) {
     );
   }
   const isPIP = pipStatus.type === "PIP";
+  const endDate = parsePIPDate(pipStatus.endDate);
+  const isActive = !endDate || endDate >= new Date();
+
   return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
-      isPIP ? "bg-red-50 text-red-700 border-red-100" : "bg-amber-50 text-amber-700 border-amber-100"
-    }`}>
-      {pipStatus.type} Active
-    </span>
+    <div className="flex flex-col gap-0.5">
+      {isActive && (
+        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
+          isPIP ? "bg-red-50 text-red-700 border-red-100" : "bg-amber-50 text-amber-700 border-amber-100"
+        }`}>
+          {pipStatus.type} Active
+        </span>
+      )}
+      {(pipStatus.issuedDate || pipStatus.endDate) && (
+        <span className={`text-xs pl-0.5 ${isActive ? "text-gray-400" : isPIP ? "text-red-400" : "text-amber-500"}`}>
+          {pipStatus.type}: {pipStatus.issuedDate} – {pipStatus.endDate}
+        </span>
+      )}
+    </div>
   );
 }
 
 export default function EmployeeTable({ employees }: EmployeeTableProps) {
+  const router = useRouter();
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Employee | null>(null);
 
@@ -69,6 +91,7 @@ export default function EmployeeTable({ employees }: EmployeeTableProps) {
             <tr className="border-b border-gray-100">
               <th className="px-4 py-3.5 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">Employee ID</th>
               <th className="px-4 py-3.5 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">Name</th>
+              <th className="px-4 py-3.5 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">Department</th>
               <th className="px-4 py-3.5 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">Date of Joining</th>
               <th className="px-4 py-3.5 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">Reporting Manager</th>
               <th className="px-4 py-3.5 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">Tenure</th>
@@ -80,7 +103,7 @@ export default function EmployeeTable({ employees }: EmployeeTableProps) {
           <tbody className="divide-y divide-gray-50">
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={8} className="px-4 py-10 text-center text-gray-400 text-sm">No employees found</td>
+                <td colSpan={9} className="px-4 py-10 text-center text-gray-400 text-sm">No employees found</td>
               </tr>
             ) : (
               filtered.map((emp) => (
@@ -93,6 +116,11 @@ export default function EmployeeTable({ employees }: EmployeeTableProps) {
                     >
                       {emp.name}
                     </button>
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                      {emp.department || "—"}
+                    </span>
                   </td>
                   <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{formatDate(emp.doj)}</td>
                   <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{emp.reportingManager}</td>
@@ -119,7 +147,12 @@ export default function EmployeeTable({ employees }: EmployeeTableProps) {
         </table>
       </div>
 
-      {selected && <EmployeeModal employee={selected} onClose={() => setSelected(null)} />}
+      {selected && (
+        <EmployeeModal
+          employee={selected}
+          onClose={() => { setSelected(null); router.refresh(); }}
+        />
+      )}
     </div>
   );
 }

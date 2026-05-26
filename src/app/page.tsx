@@ -1,12 +1,13 @@
-import { OverviewStats, TeamStats } from "@/types/employee";
+import { Suspense } from "react";
+import { OverviewStats, TeamStats, Employee } from "@/types/employee";
 import KPICards from "@/components/overview/KPICards";
 import TeamSummaryCards from "@/components/overview/TeamSummaryCards";
 import Charts from "@/components/overview/Charts";
+import DateRangeFilter from "@/components/DateRangeFilter";
 import { getTenureBand, categoryLabel, categoryIcon } from "@/lib/utils";
 import { getEmployees } from "@/lib/data";
 
-async function getOverviewData() {
-  const employees = await getEmployees();
+function buildStats(employees: Employee[]) {
   const overall: OverviewStats = {
     total:      employees.length,
     confirmed:  employees.filter((e) => e.finalStatus === "Confirmed").length,
@@ -34,13 +35,30 @@ async function getOverviewData() {
   return { overall, teamStats, tenure };
 }
 
-export default async function OverviewPage() {
-  const { overall, teamStats, tenure } = await getOverviewData();
+interface PageProps { searchParams: Promise<{ from?: string; to?: string }> }
+
+export default async function OverviewPage({ searchParams }: PageProps) {
+  const { from, to } = await searchParams;
+  const all = await getEmployees();
+
+  const employees = all.filter((e) => {
+    if (from && e.doj < from) return false;
+    if (to   && e.doj > to)   return false;
+    return true;
+  });
+
+  const { overall, teamStats, tenure } = buildStats(employees);
+
   return (
     <div className="flex-1 p-6 space-y-5">
-      <div className="mb-2">
-        <h2 className="text-2xl font-bold text-gray-800">Overview</h2>
-        <p className="text-sm text-gray-500 mt-0.5">Aggregated view across all EI categories</p>
+      <div className="flex items-start justify-between flex-wrap gap-4 mb-2">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-800">Overview</h2>
+          <p className="text-sm text-gray-500 mt-0.5">Aggregated view across all EI categories</p>
+        </div>
+        <Suspense>
+          <DateRangeFilter />
+        </Suspense>
       </div>
       <KPICards stats={overall} />
       <TeamSummaryCards teams={teamStats} />

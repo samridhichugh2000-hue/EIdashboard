@@ -212,6 +212,34 @@ export interface RawPIPRecord {
   ResignationDate: string;
 }
 
+// NR (Net Revenue) API — apikey=42, per-employee call, content is JSON string
+export async function fetchNRData(empId: number): Promise<RawNRRecord[]> {
+  const { accessToken, deviceToken } = await getAuthTokens();
+  const encodedToken = encodeURIComponent(accessToken);
+
+  const url = `${BASE_URL}/api/Kites/Operator/common?apikey=42&accessToken=${encodedToken}&deviceToken=${deviceToken}`;
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ EmpId: String(empId) }),
+    cache: "no-store",
+  });
+
+  if (!res.ok) throw new Error(`NR API failed: ${res.status}`);
+
+  const data = await res.json();
+  if (data.statuscode !== 200) throw new Error(`NR API error: ${data.message}`);
+
+  const content = typeof data.content === "string" ? JSON.parse(data.content) : data.content;
+  return (content ?? []) as RawNRRecord[];
+}
+
+export interface RawNRRecord {
+  month: string;   // "Apr-2026"
+  TotalNR: number; // can be negative
+}
+
 // Employee Directory API — apikey=47, date-range bulk fetch
 export async function fetchEmployeeListData(from: string, to: string): Promise<RawEmployeeRecord[]> {
   const { accessToken, deviceToken } = await getEmployeeAuthTokens();
@@ -241,4 +269,5 @@ export interface RawEmployeeRecord {
   "Employee Name": string;
   "Joining Date": string;  // "2026-03-31T00:00:00"
   "Manager Name": string;
+  Department: string;
 }

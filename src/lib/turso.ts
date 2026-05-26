@@ -22,6 +22,7 @@ export async function initSchema() {
       category TEXT NOT NULL,
       doj TEXT NOT NULL,
       reporting_manager TEXT,
+      department TEXT NOT NULL DEFAULT '',
       final_status TEXT NOT NULL DEFAULT 'In Progress',
       cached_at INTEGER NOT NULL
     );
@@ -82,4 +83,11 @@ export async function initSchema() {
       expires_at INTEGER NOT NULL
     );
   `);
+
+  // Migration: add department column to existing databases
+  try {
+    await db.execute({ sql: "ALTER TABLE employees ADD COLUMN department TEXT NOT NULL DEFAULT ''", args: [] });
+  } catch {
+    // column already exists — safe to ignore
+  }
 }

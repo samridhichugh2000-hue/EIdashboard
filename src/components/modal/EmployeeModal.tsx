@@ -1,16 +1,24 @@
 "use client";
 
-import { Employee, FeedbackEntry, HRIncident, PIPStatus, UtilizationEntry } from "@/types/employee";
-import { formatDate, getTenureBadgeClass, getStatusChipClass, formatIndianNumber } from "@/lib/utils";
+import { Employee, FeedbackEntry, HRIncident, NREntry, PIPStatus, UtilizationEntry } from "@/types/employee";
+import { formatDate, getTenureBadgeClass, getStatusChipClass, formatIndianNumber, cleanFeedbackText } from "@/lib/utils";
 import { useEffect, useState } from "react";
 
 interface EmployeeModalProps { employee: Employee; onClose: () => void; }
+
+// "Apr 2026" or "Apr-2026" → year*12+month for chronological comparison
+function monthToOrdinal(monthStr: string): number {
+  const d = new Date(monthStr.replace("-", " "));
+  if (isNaN(d.getTime())) return 0;
+  return d.getFullYear() * 12 + d.getMonth();
+}
 
 export default function EmployeeModal({ employee, onClose }: EmployeeModalProps) {
   const [incidents, setIncidents] = useState<HRIncident[]>(employee.hrIncidents);
   const [incidentsLoading, setIncidentsLoading] = useState(true);
   const [pipData, setPipData] = useState<PIPStatus | null | undefined>(undefined); // undefined = loading
   const [utilizationData, setUtilizationData] = useState<UtilizationEntry[] | undefined>(undefined); // undefined = loading
+  const [nrData, setNrData] = useState<NREntry[] | undefined>(undefined); // undefined = loading
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
@@ -43,13 +51,37 @@ export default function EmployeeModal({ employee, onClose }: EmployeeModalProps)
     if (employee.category !== "trainer") return;
     const empCode = employee.employeeId.replace(/\D/g, "");
     if (!empCode) { setUtilizationData([]); return; }
+    const dojOrdinal = monthToOrdinal(employee.doj);
     fetch(`/api/utilization?empCode=${empCode}`)
       .then((r) => r.json())
-      .then((res) => { setUtilizationData(res.success ? res.data : employee.utilization); })
-      .catch(() => setUtilizationData(employee.utilization)); // fallback to mock on error
-  }, [employee.employeeId, employee.category, employee.utilization]);
+      .then((res) => {
+        if (res.success) {
+          setUtilizationData(res.data.filter((e: UtilizationEntry) => monthToOrdinal(e.month) >= dojOrdinal));
+        } else {
+          setUtilizationData(employee.utilization);
+        }
+      })
+      .catch(() => setUtilizationData(employee.utilization));
+  }, [employee.employeeId, employee.category, employee.doj, employee.utilization]);
 
-  const { feedback, nrData, finalStatus } = employee;
+  useEffect(() => {
+    if (employee.category !== "sales") return;
+    const empCode = employee.employeeId.replace(/\D/g, "");
+    if (!empCode) { setNrData([]); return; }
+    const dojOrdinal = monthToOrdinal(employee.doj);
+    fetch(`/api/nr?empCode=${empCode}`)
+      .then((r) => r.json())
+      .then((res) => {
+        if (res.success) {
+          setNrData(res.data.filter((e: NREntry) => monthToOrdinal(e.month) >= dojOrdinal));
+        } else {
+          setNrData([]);
+        }
+      })
+      .catch(() => setNrData([]));
+  }, [employee.employeeId, employee.category, employee.doj]);
+
+  const { feedback, finalStatus } = employee;
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-10 px-4">
@@ -63,6 +95,7 @@ export default function EmployeeModal({ employee, onClose }: EmployeeModalProps)
               <h2 className="text-xl font-bold text-white">{employee.name}</h2>
               <div className="flex flex-wrap gap-3 mt-1.5 text-sm text-white/70">
                 <span className="font-mono text-xs bg-white/20 px-2 py-0.5 rounded text-white">{employee.employeeId}</span>
+                {employee.department && <span className="bg-white/20 px-2 py-0.5 rounded text-xs text-white">{employee.department}</span>}
                 <span>DOJ: {formatDate(employee.doj)}</span>
                 <span>Manager: {employee.reportingManager}</span>
                 <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-white/20 text-white">
@@ -88,25 +121,33 @@ export default function EmployeeModal({ employee, onClose }: EmployeeModalProps)
             </div>
           </Section>
 
-          {/* NR — Sales only, ≥60 days */}
-          {employee.category === "sales" && employee.tenureDays >= 60 && nrData.length > 0 && (
+          {/* NR — Sales only */}
+          {employee.category === "sales" && (
             <Section title="NR — Month-wise Numbers">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-gray-100">
-                    <th className="text-left py-2 text-gray-500 font-medium">Month</th>
-                    <th className="text-right py-2 text-gray-500 font-medium">NR Value (₹)</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {nrData.map((row) => (
-                    <tr key={row.month} className="border-b border-gray-50">
-                      <td className="py-2 text-gray-700">{row.month}</td>
-                      <td className="py-2 text-right font-mono font-medium text-gray-900">₹{formatIndianNumber(row.val)}</td>
+              {nrData === undefined ? (
+                <p className="text-sm text-gray-400 italic">Loading NR data…</p>
+              ) : nrData.length === 0 ? (
+                <p className="text-sm text-gray-400 italic">No NR data available</p>
+              ) : (
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-100">
+                      <th className="text-left py-2 text-gray-500 font-medium">Month</th>
+                      <th className="text-right py-2 text-gray-500 font-medium">NR Value (₹)</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {nrData.map((row) => (
+                      <tr key={row.month} className="border-b border-gray-50">
+                        <td className="py-2 text-gray-700">{row.month}</td>
+                        <td className={`py-2 text-right font-mono font-medium ${row.val < 0 ? "text-red-600" : "text-gray-900"}`}>
+                          {row.val < 0 ? "-" : ""}₹{formatIndianNumber(Math.abs(row.val))}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
             </Section>
           )}
 
@@ -224,7 +265,7 @@ function FeedbackMilestone({ label, entry, tenureDays, minDays }: {
           </div>
         )}
       </div>
-      <p className="text-sm text-gray-700">{entry.comment}</p>
+      <p className="text-sm text-gray-700 whitespace-pre-line">{cleanFeedbackText(entry.comment)}</p>
       {entry.postedOn && <p className="text-xs text-gray-400 mt-1">Shared: {entry.postedOn}</p>}
     </div>
   );

@@ -220,7 +220,7 @@ export async function POST(request: Request) {
   }
 
   const allEmployees = await getEmployees().catch(() => [] as Employee[]);
-  const active = allEmployees.filter(e => e.finalStatus !== "Confirmed");
+  const active = allEmployees.filter(e => e.finalStatus !== "Confirmed" && e.tenureDays >= 30);
 
   const incidentResults = await Promise.allSettled(
     active.map(e =>

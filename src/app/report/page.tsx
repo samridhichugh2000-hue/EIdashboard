@@ -5,6 +5,7 @@ import { fetchIncidentData, RawIncidentRecord } from "@/lib/rms-auth";
 import { Employee, NREntry, UtilizationEntry } from "@/types/employee";
 import { formatDate } from "@/lib/utils";
 import PrintButton from "@/components/report/PrintButton";
+import SendEmailButton from "@/components/report/SendEmailButton";
 
 // ── helpers ────────────────────────────────────────────────────────────────
 
@@ -295,7 +296,10 @@ export default async function ReportPage() {
           <h1 className="text-xl font-bold text-[#1E99C0]">15-Day Performance Report</h1>
           <p className="text-sm text-gray-500 mt-0.5">All active employees · Generated {today}</p>
         </div>
-        <PrintButton />
+        <div className="flex items-center gap-3">
+          <SendEmailButton />
+          <PrintButton />
+        </div>
       </div>
 
       {/* ── Report header (visible in print) ── */}

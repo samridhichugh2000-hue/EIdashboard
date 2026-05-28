@@ -378,7 +378,7 @@ async function readEmployees(db: ReturnType<typeof getTursoClient>, category?: E
       employeeId:       eid,
       name:             r.name as string,
       category:         r.category as EmployeeCategory,
-      department:       (r.department as string) ?? "",
+      department:       (r.department as string) || (r.category === "sales" ? "Sales" : r.category === "trainer" ? "Training Delivery" : "Personal Training"),
       doj,
       tenureDays:       computeTenureDays(doj),
       reportingManager: r.reporting_manager as string,

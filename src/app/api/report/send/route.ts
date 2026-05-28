@@ -36,10 +36,15 @@ function fmtNR(val: number): string {
   return `${sign}₹${abs}`;
 }
 
-function fbCell(received: boolean, tenureDays: number, threshold: number): string {
-  if (received) return `<span style="color:${C.green};font-weight:600;">✓ Received</span>`;
-  if (tenureDays >= threshold) return `<span style="color:${C.red};font-weight:600;">Pending</span>`;
-  return `<span style="color:#d1d5db;">—</span>`;
+function fbCell(entry: Employee["feedback"]["d30"], tenureDays: number, threshold: number): string {
+  if (!entry) {
+    if (tenureDays >= threshold) return `<span style="color:${C.red};font-weight:600;">Pending</span>`;
+    return `<span style="color:#d1d5db;">—</span>`;
+  }
+  return `<div style="min-width:160px;">
+    <div style="font-size:9px;color:#9ca3af;margin-bottom:2px;">${entry.postedOn}</div>
+    <div style="font-size:10px;color:#374151;line-height:1.4;word-wrap:break-word;white-space:pre-wrap;">${entry.comment || "—"}</div>
+  </div>`;
 }
 
 function nrCell(entry: Employee["nrData"][0] | undefined): string {
@@ -57,11 +62,22 @@ function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
 }
 
-function incidentSummary(incidents: RawIncidentRecord[]): string {
-  if (!incidents.length) return "—";
-  const pos = incidents.filter(x => x.IncidentType === "Positive Incident").length;
-  const neg = incidents.filter(x => x.IncidentType === "Negative Incident").length;
-  return [pos > 0 && `${pos} Pos`, neg > 0 && `${neg} Neg`].filter(Boolean).join(" / ");
+function fmtIncDate(dateStr: string): string {
+  const d = new Date(dateStr);
+  return isNaN(d.getTime()) ? dateStr : d.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+}
+
+function incidentCell(incidents: RawIncidentRecord[]): string {
+  if (!incidents.length) return `<span style="color:#d1d5db;">—</span>`;
+  return `<div style="min-width:160px;">${
+    incidents.map(inc => {
+      const pos = inc.IncidentType === "Positive Incident";
+      return `<div style="margin-bottom:6px;">
+        <div style="font-size:9px;color:#9ca3af;">${fmtIncDate(inc.IncidentDate)}</div>
+        <div style="font-size:10px;font-weight:600;color:${pos ? C.green : C.red};line-height:1.4;">${pos ? "+" : "−"} ${inc.Reason}</div>
+      </div>`;
+    }).join("")
+  }</div>`;
 }
 
 function statusBadge(status: string): string {
@@ -71,11 +87,16 @@ function statusBadge(status: string): string {
   return badge(status, C.teal, C.tealBg);
 }
 
-function pipBadge(emp: Employee): string {
+function pipCell(emp: Employee): string {
   if (!emp.pipStatus) return `<span style="color:${C.gray}">None</span>`;
-  const bg = emp.pipStatus.type === "PIP" ? "#fee2e2" : "#fef3c7";
-  const color = emp.pipStatus.type === "PIP" ? C.red : C.amber;
-  return badge(emp.pipStatus.type, color, bg);
+  const isP = emp.pipStatus.type === "PIP";
+  const bg = isP ? "#fee2e2" : "#fef3c7";
+  const color = isP ? C.red : C.amber;
+  return `<div style="min-width:110px;">
+    ${badge(emp.pipStatus.type, color, bg)}
+    ${emp.pipStatus.issuedDate ? `<div style="font-size:9px;color:#6b7280;margin-top:3px;">From: ${emp.pipStatus.issuedDate}</div>` : ""}
+    ${emp.pipStatus.endDate    ? `<div style="font-size:9px;color:#6b7280;">To: ${emp.pipStatus.endDate}</div>` : ""}
+  </div>`;
 }
 
 // ── table renderers ────────────────────────────────────────────────────────
@@ -90,11 +111,11 @@ function commonRow(emp: Employee, incidents: RawIncidentRecord[], i: number, ext
     ${td(emp.reportingManager)}
     ${td(formatDate(emp.doj))}
     ${td(`${emp.tenureDays}d`, "center")}
-    ${td(pipBadge(emp), "center")}
-    ${td(incidentSummary(incidents), "center")}
-    ${td(fbCell(!!emp.feedback.d30, emp.tenureDays, 30), "center")}
-    ${td(fbCell(!!emp.feedback.d60, emp.tenureDays, 60), "center")}
-    ${td(fbCell(!!emp.feedback.d90, emp.tenureDays, 90), "center")}
+    ${td(pipCell(emp))}
+    ${td(incidentCell(incidents))}
+    ${td(fbCell(emp.feedback.d30, emp.tenureDays, 30))}
+    ${td(fbCell(emp.feedback.d60, emp.tenureDays, 60))}
+    ${td(fbCell(emp.feedback.d90, emp.tenureDays, 90))}
     ${extraCells}
     ${td(statusBadge(emp.finalStatus), "center")}
     ${td(emp.hrRemarks ? `<em style="color:#374151;">${emp.hrRemarks}</em>` : `<span style="color:#d1d5db;">—</span>`)}

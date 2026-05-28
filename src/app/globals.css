@@ -19,3 +19,10 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
 }
+
+@media print {
+  @page { size: A4 landscape; margin: 1cm; }
+  aside, .no-print { display: none !important; }
+  main { overflow: visible !important; }
+  body { background: white !important; }
+}

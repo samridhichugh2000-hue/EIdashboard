@@ -40,6 +40,13 @@ function IconPT() {
     </svg>
   );
 }
+function IconReport() {
+  return (
+    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 17v-2m3 2v-4m3 4v-6M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2h-5L9 7H5a2 2 0 00-2 2v9a2 2 0 002 2z" />
+    </svg>
+  );
+}
 
 const CATEGORIES: { key: EmployeeCategory; label: string; Icon: () => React.ReactElement }[] = [
   { key: "sales",   label: "Sales",   Icon: IconSales   },
@@ -87,6 +94,18 @@ export default function Sidebar({ counts }: SidebarProps) {
           );
         })}
       </nav>
+
+      <div className="px-3 pb-3">
+        <p className="px-3 pt-2 pb-1 text-[10px] font-semibold text-white/40 uppercase tracking-widest">
+          Reports
+        </p>
+        <NavItem
+          href="/report"
+          label="15-Day Report"
+          Icon={IconReport}
+          isActive={pathname === "/report"}
+        />
+      </div>
 
       <div className="px-6 py-5">
         <p className="text-xs text-white/40">Extended Interview · v3.0</p>

@@ -56,6 +56,16 @@ export function categoryIcon(cat: EmployeeCategory): string {
   }
 }
 
+// Returns true when feedback indicates "below satisfactory" performance:
+// — no strengths noted at all, OR explicit "below satisfactory" text
+export function isBelowSatisfactory(entry: { areaOfStrength: string | null; areaOfImprovement: string | null; comment: string }): boolean {
+  const lower = entry.comment.toLowerCase();
+  if (lower.includes("below satisfactory") || lower.includes("not satisfactory") || lower.includes("below expectation")) return true;
+  const hasStrength    = !!entry.areaOfStrength?.trim();
+  const hasImprovement = !!entry.areaOfImprovement?.trim();
+  return !hasStrength && hasImprovement;
+}
+
 // Infer milestone from feedback date relative to DOJ
 export function inferMilestone(dojStr: string, feedbackDateStr: string): "d30" | "d60" | "d90" | null {
   const doj = new Date(dojStr);

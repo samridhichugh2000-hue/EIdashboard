@@ -10,8 +10,8 @@ export const MOCK_EMPLOYEES: Employee[] = [
     tenureDays: 91,
     reportingManager: "Imran Mr",
     feedback: {
-      d30: { rating: null, comment: "Continue & Hardworking. Problem solving approach.", postedOn: "03 Feb 2026" },
-      d60: { rating: null, comment: "Discipline: Above Average. Suitable for role.", postedOn: "06 Apr 2026" },
+      d30: { rating: null, areaOfStrength: null, areaOfImprovement: null, comment:"Continue & Hardworking. Problem solving approach.", postedOn: "03 Feb 2026" },
+      d60: { rating: null, areaOfStrength: null, areaOfImprovement: null, comment:"Discipline: Above Average. Suitable for role.", postedOn: "06 Apr 2026" },
       d90: null,
     },
     nrData: [
@@ -33,8 +33,8 @@ export const MOCK_EMPLOYEES: Employee[] = [
     tenureDays: 86,
     reportingManager: "Sakshi Nagpal",
     feedback: {
-      d30: { rating: null, comment: "Good trainer. Students give positive reviews.", postedOn: "10 Feb 2026" },
-      d60: { rating: null, comment: "Discipline: Average. Suitable for role: Average.", postedOn: "06 Apr 2026" },
+      d30: { rating: null, areaOfStrength: null, areaOfImprovement: null, comment:"Good trainer. Students give positive reviews.", postedOn: "10 Feb 2026" },
+      d60: { rating: null, areaOfStrength: null, areaOfImprovement: null, comment:"Discipline: Average. Suitable for role: Average.", postedOn: "06 Apr 2026" },
       d90: null,
     },
     nrData: [],
@@ -56,9 +56,9 @@ export const MOCK_EMPLOYEES: Employee[] = [
     tenureDays: 112,
     reportingManager: "Kanagavalli Joseph Manns",
     feedback: {
-      d30: { rating: null, comment: "Showing improvement. Working on feedbacks given.", postedOn: "14 Jan 2026" },
-      d60: { rating: null, comment: "Discipline: Average. Need to improve presentation skills.", postedOn: "13 Feb 2026" },
-      d90: { rating: null, comment: "Coming out of comfort zone. Exploring new skills.", postedOn: "05 Apr 2026" },
+      d30: { rating: null, areaOfStrength: null, areaOfImprovement: null, comment:"Showing improvement. Working on feedbacks given.", postedOn: "14 Jan 2026" },
+      d60: { rating: null, areaOfStrength: null, areaOfImprovement: null, comment:"Discipline: Average. Need to improve presentation skills.", postedOn: "13 Feb 2026" },
+      d90: { rating: null, areaOfStrength: null, areaOfImprovement: null, comment:"Coming out of comfort zone. Exploring new skills.", postedOn: "05 Apr 2026" },
     },
     nrData: [],
     utilization: [],
@@ -77,9 +77,9 @@ export const MOCK_EMPLOYEES: Employee[] = [
     tenureDays: 107,
     reportingManager: "Farha Shaikh",
     feedback: {
-      d30: { rating: null, comment: "Has potential to do better.", postedOn: "19 Jan 2026" },
-      d60: { rating: null, comment: "Need to be quick in skill upgrade. Prepare well for mocks.", postedOn: "18 Feb 2026" },
-      d90: { rating: null, comment: "Informed leave issue resolved. Improvement noted.", postedOn: "04 Apr 2026" },
+      d30: { rating: null, areaOfStrength: null, areaOfImprovement: null, comment:"Has potential to do better.", postedOn: "19 Jan 2026" },
+      d60: { rating: null, areaOfStrength: null, areaOfImprovement: null, comment:"Need to be quick in skill upgrade. Prepare well for mocks.", postedOn: "18 Feb 2026" },
+      d90: { rating: null, areaOfStrength: null, areaOfImprovement: null, comment:"Informed leave issue resolved. Improvement noted.", postedOn: "04 Apr 2026" },
     },
     nrData: [],
     utilization: [
@@ -102,8 +102,8 @@ export const MOCK_EMPLOYEES: Employee[] = [
     tenureDays: 81,
     reportingManager: "Sushma Sharma",
     feedback: {
-      d30: { rating: null, comment: "Good attitude. Needs sales training reinforcement.", postedOn: "14 Feb 2026" },
-      d60: { rating: null, comment: "Discipline: Average. Suitable for role: Average.", postedOn: "05 Apr 2026" },
+      d30: { rating: null, areaOfStrength: null, areaOfImprovement: null, comment:"Good attitude. Needs sales training reinforcement.", postedOn: "14 Feb 2026" },
+      d60: { rating: null, areaOfStrength: null, areaOfImprovement: null, comment:"Discipline: Average. Suitable for role: Average.", postedOn: "05 Apr 2026" },
       d90: null,
     },
     nrData: [

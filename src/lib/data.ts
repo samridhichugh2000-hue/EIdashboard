@@ -324,7 +324,7 @@ async function readEmployees(db: ReturnType<typeof getTursoClient>, category?: E
 
   // Fetch feedback, NR, and utilization in parallel
   const [fbRows, nrRows, utilRows] = await Promise.all([
-    db.execute({ sql: "SELECT employee_id, milestone, rating, comment, posted_on FROM feedback", args: [] }),
+    db.execute({ sql: "SELECT employee_id, milestone, rating, comment, area_of_strength, area_of_improvement, posted_on FROM feedback", args: [] }),
     db.execute({ sql: "SELECT employee_id, month, val FROM nr_data", args: [] }),
     db.execute({ sql: "SELECT employee_id, month, val FROM utilization", args: [] }),
   ]);
@@ -334,9 +334,11 @@ async function readEmployees(db: ReturnType<typeof getTursoClient>, category?: E
     const eid = r.employee_id as string;
     if (!feedbackMap.has(eid)) feedbackMap.set(eid, new Map());
     feedbackMap.get(eid)!.set(r.milestone as string, {
-      rating:   r.rating as number | null,
-      comment:  (r.comment as string) ?? "",
-      postedOn: (r.posted_on as string) ?? "",
+      rating:           r.rating as number | null,
+      comment:          (r.comment as string) ?? "",
+      postedOn:         (r.posted_on as string) ?? "",
+      areaOfStrength:   (r.area_of_strength as string | null) ?? null,
+      areaOfImprovement:(r.area_of_improvement as string | null) ?? null,
     });
   }
 

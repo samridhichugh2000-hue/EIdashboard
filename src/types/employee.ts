@@ -7,6 +7,8 @@ export interface FeedbackEntry {
   rating: number | null;
   comment: string;
   postedOn: string; // "DD Mon YYYY"
+  areaOfStrength: string | null;
+  areaOfImprovement: string | null;
 }
 
 export interface NREntry {

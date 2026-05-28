@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Employee, NREntry, PIPStatus, UtilizationEntry } from "@/types/employee";
-import { formatDate, getTenureBadgeClass, getStatusChipClass } from "@/lib/utils";
+import { formatDate, getTenureBadgeClass, getStatusChipClass, isBelowSatisfactory } from "@/lib/utils";
 import EmployeeModal from "@/components/modal/EmployeeModal";
 import IncidentBadge from "@/components/IncidentBadge";
 import HRActionButton from "@/components/HRActionButton";
@@ -52,23 +52,38 @@ function FeedbackAlert({ tenureDays, feedback }: { tenureDays: number; feedback:
   if (tenureDays >= 60 && !feedback.d60) missing.push("60d");
   if (tenureDays >= 90 && !feedback.d90) missing.push("90d");
 
-  if (missing.length === 0) {
+  // Check quality of received feedbacks
+  const received = [feedback.d30, feedback.d60, feedback.d90].filter(Boolean);
+  const hasBelow = received.some(e => isBelowSatisfactory(e!));
+
+  if (missing.length > 0) {
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-200 whitespace-nowrap">
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200 whitespace-nowrap">
         <svg className="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
         </svg>
-        All feedbacks received
+        {missing.join(" / ")} not submitted
+      </span>
+    );
+  }
+
+  if (hasBelow) {
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-red-50 text-red-700 border border-red-200 whitespace-nowrap">
+        <svg className="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+        </svg>
+        Below Satisfactory
       </span>
     );
   }
 
   return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200 whitespace-nowrap">
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-200 whitespace-nowrap">
       <svg className="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
       </svg>
-      {missing.join(" / ")} not submitted
+      All feedbacks received
     </span>
   );
 }

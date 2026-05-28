@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 import { getEmployees } from "@/lib/data";
 import { fetchIncidentData, RawIncidentRecord } from "@/lib/rms-auth";
 import { Employee, FeedbackEntry, NREntry, PIPStatus, UtilizationEntry } from "@/types/employee";
-import { formatDate } from "@/lib/utils";
+import { formatDate, isBelowSatisfactory } from "@/lib/utils";
 import PrintButton from "@/components/report/PrintButton";
 import SendEmailButton from "@/components/report/SendEmailButton";
 
@@ -62,9 +62,15 @@ function FBCell({ entry, tenureDays, threshold }: { entry: FeedbackEntry | null;
     if (tenureDays >= threshold) return <span className="text-red-500 font-medium text-[10px]">Pending</span>;
     return <span className="text-gray-300 text-[10px]">—</span>;
   }
+  const below = isBelowSatisfactory(entry);
   return (
-    <div className="flex flex-col gap-0.5 min-w-[160px]">
-      <span className="text-[9px] text-gray-400">{entry.postedOn}</span>
+    <div className={`flex flex-col gap-0.5 min-w-[160px] rounded px-1.5 py-1 ${below ? "bg-red-50" : "bg-green-50"}`}>
+      <div className="flex items-center justify-between gap-1">
+        <span className="text-[9px] text-gray-400">{entry.postedOn}</span>
+        <span className={`text-[9px] font-semibold ${below ? "text-red-600" : "text-green-700"}`}>
+          {below ? "Below Satisfactory" : "Satisfactory"}
+        </span>
+      </div>
       <span className="text-[10px] text-gray-700 leading-snug whitespace-pre-wrap">{entry.comment || "—"}</span>
     </div>
   );

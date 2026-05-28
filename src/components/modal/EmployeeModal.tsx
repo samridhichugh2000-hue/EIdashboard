@@ -1,7 +1,7 @@
 "use client";
 
 import { Employee, FeedbackEntry, HRIncident, NREntry, PIPStatus, UtilizationEntry } from "@/types/employee";
-import { formatDate, getTenureBadgeClass, getStatusChipClass, formatIndianNumber, cleanFeedbackText } from "@/lib/utils";
+import { formatDate, getTenureBadgeClass, getStatusChipClass, formatIndianNumber, cleanFeedbackText, isBelowSatisfactory } from "@/lib/utils";
 import { useEffect, useState } from "react";
 
 interface EmployeeModalProps { employee: Employee; onClose: () => void; }
@@ -253,17 +253,17 @@ function FeedbackMilestone({ label, entry, tenureDays, minDays }: {
       </div>
     );
   }
+  const below = isBelowSatisfactory(entry);
+  const style = below
+    ? { wrap: "bg-red-50 border-red-200",   label: "text-red-800",   badge: "bg-red-100 text-red-700",   icon: "⚠️", tag: "Below Satisfactory" }
+    : { wrap: "bg-green-50 border-green-200", label: "text-green-800", badge: "bg-green-100 text-green-700", icon: "✓",  tag: "Satisfactory" };
   return (
-    <div className="px-4 py-3 bg-indigo-50 border border-indigo-100 rounded-lg">
-      <div className="flex items-center justify-between mb-1">
-        <p className="text-sm font-semibold text-indigo-800">{label}</p>
-        {entry.rating !== null && (
-          <div className="flex items-center gap-0.5">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <span key={i} className={i < entry.rating! ? "text-amber-400" : "text-gray-200"}>★</span>
-            ))}
-          </div>
-        )}
+    <div className={`px-4 py-3 rounded-lg border ${style.wrap}`}>
+      <div className="flex items-center justify-between mb-1.5">
+        <p className={`text-sm font-semibold ${style.label}`}>{label}</p>
+        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium ${style.badge}`}>
+          {style.icon} {style.tag}
+        </span>
       </div>
       <p className="text-sm text-gray-700 whitespace-pre-line">{cleanFeedbackText(entry.comment)}</p>
       {entry.postedOn && <p className="text-xs text-gray-400 mt-1">Shared: {entry.postedOn}</p>}

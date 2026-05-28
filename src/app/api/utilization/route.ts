@@ -26,7 +26,7 @@ export async function GET(request: Request) {
   if (cached.rows.length > 0) {
     const data: UtilizationEntry[] = cached.rows.map((r) => ({
       month: r.month as string,
-      val: r.val as number,
+      val: Number(r.val),
     }));
     return NextResponse.json({ success: true, data, source: "cache" });
   }

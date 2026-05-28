@@ -49,6 +49,7 @@ export interface Employee {
   pipStatus: PIPStatus | null;
   hrIncidents: HRIncident[];
   finalStatus: FinalStatus;
+  hrRemarks?: string | null;
 }
 
 export interface OverviewStats {

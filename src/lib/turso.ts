@@ -90,4 +90,9 @@ export async function initSchema() {
   } catch {
     // column already exists — safe to ignore
   }
+
+  // Migration: add HR remarks column
+  try {
+    await db.execute({ sql: "ALTER TABLE employees ADD COLUMN hr_remarks TEXT", args: [] });
+  } catch {}
 }

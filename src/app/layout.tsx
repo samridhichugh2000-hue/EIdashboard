@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 };
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  const employees = await getEmployees();
+  const employees = await getEmployees().catch(() => []);
   const counts = {
     sales:   employees.filter((e) => e.category === "sales").length,
     trainer: employees.filter((e) => e.category === "trainer").length,

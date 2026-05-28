@@ -3,8 +3,10 @@ import {
   fetchEmployeeListData,
   fetchFeedbackData,
   fetchPIPData,
+  fetchNRData,
+  fetchUtilizationData,
 } from "@/lib/rms-auth";
-import { Employee, EmployeeCategory, FinalStatus, FeedbackEntry, PIPStatus } from "@/types/employee";
+import { Employee, EmployeeCategory, FinalStatus, FeedbackEntry, PIPStatus, NREntry, UtilizationEntry } from "@/types/employee";
 import { computeTenureDays, inferMilestone, isoToApiDate, todayAsApiDate, cleanFeedbackText } from "@/lib/utils";
 
 const CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
@@ -34,16 +36,21 @@ export async function getEmployees(category?: EmployeeCategory): Promise<Employe
   const latest = (ageCheck.rows[0]?.latest as number | null) ?? 0;
 
   if (latest <= now - CACHE_TTL_MS) {
+    // Employee/PIP/Feedback sync (may fail if employee API is unavailable)
+    let empIds: string[] = [];
     try {
-      // Full sync: employees first (PIP needs employee IDs), then PIP + feedback in parallel
-      const empIds = await syncEmployees(db, now);
-      await Promise.all([
-        syncPIP(db, empIds, now),
-        syncFeedback(db, now),
-      ]);
+      empIds = await syncEmployees(db, now);
+      await Promise.all([syncPIP(db, empIds, now), syncFeedback(db, now)]);
     } catch (err) {
-      // Sync failed (e.g. API unavailable) — serve stale cache rather than crash
-      console.error("Sync failed, serving cached data:", err);
+      console.warn("Employee/PIP/Feedback sync failed, serving cached data:", err);
+    }
+
+    // NR and Utilization sync independently — run even if employee sync failed,
+    // using whatever employee IDs are already in the DB
+    try {
+      await Promise.all([syncNR(db, now), syncUtilization(db, now)]);
+    } catch (err) {
+      console.warn("NR/Utilization sync failed:", err);
     }
   }
 
@@ -232,13 +239,81 @@ async function syncFeedback(db: ReturnType<typeof getTursoClient>, now: number) 
   }
 }
 
+async function syncNR(db: ReturnType<typeof getTursoClient>, now: number) {
+  const rows = await db.execute({
+    sql: "SELECT employee_id FROM employees WHERE category = 'sales'",
+    args: [],
+  });
+
+  await Promise.allSettled(
+    rows.rows.map(async (r) => {
+      const empCode = parseInt((r.employee_id as string).replace(/\D/g, ""), 10);
+      try {
+        const raw = await fetchNRData(empCode);
+        const parseM = (m: string) => { const [mon, yr] = m.split("-"); return new Date(`${mon} 1, ${yr}`).getTime(); };
+        const data = raw
+          .map((rec) => ({ month: rec.month, val: rec.TotalNR }))
+          .sort((a, b) => parseM(b.month) - parseM(a.month))
+          .slice(0, 3);
+        await db.execute({ sql: "DELETE FROM nr_data WHERE employee_id = ?", args: [String(empCode)] });
+        for (const entry of data) {
+          await db.execute({
+            sql: "INSERT INTO nr_data (employee_id, month, val, cached_at) VALUES (?, ?, ?, ?)",
+            args: [String(empCode), entry.month, entry.val, now],
+          });
+        }
+      } catch { /* non-fatal — skip this employee */ }
+    })
+  );
+}
+
+async function syncUtilization(db: ReturnType<typeof getTursoClient>, now: number) {
+  const rows = await db.execute({
+    sql: "SELECT employee_id FROM employees WHERE category = 'trainer'",
+    args: [],
+  });
+
+  await Promise.allSettled(
+    rows.rows.map(async (r) => {
+      const empCode = parseInt((r.employee_id as string).replace(/\D/g, ""), 10);
+      try {
+        const raw = await fetchUtilizationData(empCode);
+        await db.execute({ sql: "DELETE FROM utilization WHERE employee_id = ?", args: [String(empCode)] });
+        for (const rec of raw) {
+          await db.execute({
+            sql: "INSERT INTO utilization (employee_id, month, val, cached_at) VALUES (?, ?, ?, ?)",
+            args: [String(empCode), rec.MonthName, rec.Utilization, now],
+          });
+        }
+      } catch { /* non-fatal — skip this employee */ }
+    })
+  );
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Read from Turso (enriched with PIP + feedback via JOIN/query)
 // ─────────────────────────────────────────────────────────────────────────────
 
+function monthToOrd(s: string): number {
+  if (!s) return 0;
+  // "YYYY-MM-DD" or "YYYY-MM"
+  if (/^\d{4}-\d{2}/.test(s)) {
+    const parts = s.split("-");
+    return parseInt(parts[0]) * 12 + parseInt(parts[1]) - 1;
+  }
+  // "Apr-2026" or "Mar 2026" or "March 2026"
+  // new Date("Apr 2026") is Invalid Date in V8 — use "Mon 1, YYYY" which is reliably parsed
+  const match = s.match(/^([A-Za-z]+)[- ](\d{4})$/);
+  if (match) {
+    const d = new Date(`${match[1]} 1, ${match[2]}`);
+    if (!isNaN(d.getTime())) return d.getFullYear() * 12 + d.getMonth();
+  }
+  return 0;
+}
+
 async function readEmployees(db: ReturnType<typeof getTursoClient>, category?: EmployeeCategory): Promise<Employee[]> {
   const empRows = await db.execute({
-    sql: `SELECT e.employee_id, e.name, e.category, e.department, e.doj, e.reporting_manager, e.final_status,
+    sql: `SELECT e.employee_id, e.name, e.category, e.department, e.doj, e.reporting_manager, e.final_status, e.hr_remarks,
                  p.type AS pip_type, p.issued_date, p.end_date
           FROM employees e
           LEFT JOIN pip_status p ON e.employee_id = p.employee_id AND p.type != 'none'
@@ -247,11 +322,13 @@ async function readEmployees(db: ReturnType<typeof getTursoClient>, category?: E
     args: category ? [category] : [],
   });
 
-  // Fetch all cached feedback in one query, group by employee
-  const fbRows = await db.execute({
-    sql: "SELECT employee_id, milestone, rating, comment, posted_on FROM feedback",
-    args: [],
-  });
+  // Fetch feedback, NR, and utilization in parallel
+  const [fbRows, nrRows, utilRows] = await Promise.all([
+    db.execute({ sql: "SELECT employee_id, milestone, rating, comment, posted_on FROM feedback", args: [] }),
+    db.execute({ sql: "SELECT employee_id, month, val FROM nr_data", args: [] }),
+    db.execute({ sql: "SELECT employee_id, month, val FROM utilization", args: [] }),
+  ]);
+
   const feedbackMap = new Map<string, Map<string, FeedbackEntry>>();
   for (const r of fbRows.rows) {
     const eid = r.employee_id as string;
@@ -263,14 +340,39 @@ async function readEmployees(db: ReturnType<typeof getTursoClient>, category?: E
     });
   }
 
+  // NR data is keyed by numeric empCode (no "EMP" prefix)
+  const nrMap = new Map<string, NREntry[]>();
+  for (const r of nrRows.rows) {
+    const code = r.employee_id as string;
+    if (!nrMap.has(code)) nrMap.set(code, []);
+    nrMap.get(code)!.push({ month: r.month as string, val: Number(r.val) });
+  }
+
+  const utilMap = new Map<string, UtilizationEntry[]>();
+  for (const r of utilRows.rows) {
+    const code = r.employee_id as string;
+    if (!utilMap.has(code)) utilMap.set(code, []);
+    utilMap.get(code)!.push({ month: r.month as string, val: Number(r.val) });
+  }
+
   return empRows.rows.map((r) => {
     const eid = r.employee_id as string;
     const doj = r.doj as string;
     const empFb = feedbackMap.get(eid);
+    const empCode = eid.replace(/\D/g, "");
+    const dojOrd = monthToOrd(doj);
 
     const pipStatus: PIPStatus | null = r.pip_type
       ? { type: r.pip_type as "PA" | "PIP", issuedDate: r.issued_date as string, endDate: r.end_date as string }
       : null;
+
+    const nrData = (nrMap.get(empCode) ?? [])
+      .filter((e) => monthToOrd(e.month) >= dojOrd)
+      .sort((a, b) => monthToOrd(a.month) - monthToOrd(b.month));
+
+    const utilization = (utilMap.get(empCode) ?? [])
+      .filter((e) => monthToOrd(e.month) >= dojOrd)
+      .sort((a, b) => monthToOrd(a.month) - monthToOrd(b.month));
 
     return {
       employeeId:       eid,
@@ -285,11 +387,12 @@ async function readEmployees(db: ReturnType<typeof getTursoClient>, category?: E
         d60: empFb?.get("d60") ?? null,
         d90: empFb?.get("d90") ?? null,
       },
-      nrData:      [],
-      utilization: [],
+      nrData,
+      utilization,
       pipStatus,
       hrIncidents: [],
       finalStatus: (r.final_status as string) as FinalStatus,
+      hrRemarks:   (r.hr_remarks as string | null) ?? null,
     };
   });
 }

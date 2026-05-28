@@ -30,10 +30,10 @@ export async function GET(request: Request) {
   });
 
   if (cached.rows.length > 0) {
-    const data: NREntry[] = (cached.rows as unknown as { month: string; val: number }[])
+    const data: NREntry[] = cached.rows
+      .map((r) => ({ month: r.month as string, val: Number(r.val) }))
       .sort((a, b) => parseMonth(b.month) - parseMonth(a.month))
-      .slice(0, 3)
-      .map((r) => ({ month: r.month, val: r.val }));
+      .slice(0, 3);
     return NextResponse.json({ success: true, data, source: "cache" });
   }
 

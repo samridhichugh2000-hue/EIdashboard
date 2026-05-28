@@ -9,8 +9,8 @@ export function computeTenureDays(doj: string): number {
 }
 
 export function getTenureBand(days: number): "early" | "mid" | "complete" {
-  if (days <= 59) return "early";
-  if (days <= 89) return "mid";
+  if (days <= 30) return "early";
+  if (days <= 60) return "mid";
   return "complete";
 }
 

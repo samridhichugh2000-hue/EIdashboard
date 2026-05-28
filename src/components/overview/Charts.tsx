@@ -116,9 +116,9 @@ export default function Charts({ overall, teams, tenure }: ChartsProps) {
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
         <h3 className="text-sm font-semibold text-gray-700 mb-4">Tenure Distribution</h3>
         <div className="flex flex-col gap-4">
-          <TenureBar label="Early Stage" sublabel="≤ 59 days"    count={tenure.early}    total={tenure.early + tenure.mid + tenure.complete} color="amber" />
-          <TenureBar label="Mid Stage"   sublabel="60 – 89 days" count={tenure.mid}      total={tenure.early + tenure.mid + tenure.complete} color="blue"  />
-          <TenureBar label="Complete"    sublabel="≥ 90 days"    count={tenure.complete} total={tenure.early + tenure.mid + tenure.complete} color="teal"  />
+          <TenureBar label="30 Days"  sublabel="≤ 30 days"    count={tenure.early}    total={tenure.early + tenure.mid + tenure.complete} color="amber" />
+          <TenureBar label="60 Days"  sublabel="31 – 60 days" count={tenure.mid}      total={tenure.early + tenure.mid + tenure.complete} color="blue"  />
+          <TenureBar label="90 Days"  sublabel="61 – 90+ days" count={tenure.complete} total={tenure.early + tenure.mid + tenure.complete} color="teal"  />
         </div>
       </div>
     </div>

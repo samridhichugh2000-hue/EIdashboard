@@ -10,10 +10,10 @@ import DateRangeFilter from "@/components/DateRangeFilter";
 
 const VALID_CATEGORIES: EmployeeCategory[] = ["sales", "trainer", "pt"];
 
-const CATEGORY_GRADIENTS: Record<string, string> = {
-  sales:   "from-[#28C5BE] to-[#1E99C0]",
-  trainer: "from-[#6C63FF] to-[#4F46E5]",
-  pt:      "from-[#F59E0B] to-[#D97706]",
+const CATEGORY_DOTS: Record<string, string> = {
+  sales:   "bg-teal-500",
+  trainer: "bg-violet-500",
+  pt:      "bg-amber-500",
 };
 
 interface CategoryPageProps {
@@ -39,7 +39,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
     <div className="p-6 space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
-          <div className={`w-2 h-8 rounded-full bg-gradient-to-b ${CATEGORY_GRADIENTS[category]}`} />
+          <span className={`w-2 h-2 rounded-full ${CATEGORY_DOTS[category]}`} />
           <div>
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest">{employees.length} employees</p>
             {(from || to) && <p className="text-[10px] text-gray-400 mt-0.5">Date filtered</p>}

@@ -15,10 +15,10 @@ import { OverviewStats, TeamStats } from "@/types/employee";
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement);
 
 const STATUS_COLORS = {
-  Confirmed:    { bg: "rgba(40, 197, 190, 0.85)",  border: "#1E99C0" },
-  "In Progress":{ bg: "rgba(96, 165, 250, 0.85)",  border: "#3B82F6" },
-  "PA Issued":  { bg: "rgba(251, 191, 36, 0.85)",  border: "#F59E0B" },
-  "PIP Issued": { bg: "rgba(248, 113, 113, 0.85)", border: "#EF4444" },
+  Confirmed:    { bg: "rgba(20, 184, 166, 0.65)",  border: "rgba(20, 184, 166, 0.9)"  },
+  "In Progress":{ bg: "rgba(96, 165, 250, 0.65)",  border: "rgba(96, 165, 250, 0.9)"  },
+  "PA Issued":  { bg: "rgba(251, 191, 36, 0.65)",  border: "rgba(251, 191, 36, 0.9)"  },
+  "PIP Issued": { bg: "rgba(248, 113, 113, 0.65)", border: "rgba(248, 113, 113, 0.9)" },
 };
 
 interface ChartsProps {
@@ -44,10 +44,10 @@ export default function Charts({ overall, teams, tenure }: ChartsProps) {
     datasets: [{
       label: "Employees",
       data: teams.map((t) => t.total),
-      backgroundColor: ["rgba(40,197,190,0.8)", "rgba(108,99,255,0.8)", "rgba(251,191,36,0.8)"],
-      borderColor:     ["#1E99C0", "#4F46E5", "#D97706"],
-      borderWidth: 2,
-      borderRadius: 8,
+      backgroundColor: "rgba(20, 184, 166, 0.6)",
+      borderColor:     "rgba(20, 184, 166, 0.9)",
+      borderWidth: 1.5,
+      borderRadius: 6,
     }],
   };
 
@@ -129,23 +129,19 @@ function TenureBar({ label, sublabel, count, total, color }: {
   label: string; sublabel: string; count: number; total: number; color: "amber" | "blue" | "teal";
 }) {
   const pct = total > 0 ? Math.round((count / total) * 100) : 0;
-  const styles = {
-    amber: { bar: "bg-amber-400", num: "text-amber-600", bg: "bg-amber-50" },
-    blue:  { bar: "bg-blue-400",  num: "text-blue-600",  bg: "bg-blue-50"  },
-    teal:  { bar: "bg-[#28C5BE]", num: "text-[#1E99C0]", bg: "bg-teal-50"  },
-  }[color];
+  const bar = { amber: "bg-amber-400", blue: "bg-blue-400", teal: "bg-teal-500" }[color];
 
   return (
-    <div className={`rounded-xl px-4 py-3 ${styles.bg}`}>
+    <div className="rounded-xl px-4 py-3 bg-slate-50 border border-slate-100">
       <div className="flex items-center justify-between mb-2">
         <div>
           <p className="text-sm font-semibold text-gray-700">{label}</p>
           <p className="text-xs text-gray-400">{sublabel}</p>
         </div>
-        <span className={`text-2xl font-bold ${styles.num}`}>{count}</span>
+        <span className="text-2xl font-bold text-gray-800">{count}</span>
       </div>
-      <div className="h-1.5 bg-white rounded-full overflow-hidden">
-        <div className={`h-full ${styles.bar} rounded-full transition-all duration-500`} style={{ width: `${pct}%` }} />
+      <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+        <div className={`h-full ${bar} rounded-full transition-all duration-500`} style={{ width: `${pct}%` }} />
       </div>
     </div>
   );

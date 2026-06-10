@@ -45,10 +45,106 @@ function UtilCell({ entry }: { entry: UtilizationEntry | undefined }) {
   );
 }
 
-function FeedbackAlert({ tenureDays, feedback, empName }: {
+type ClarifySendState = "idle" | "sending" | "sent" | "error";
+
+function ClarifyButton({ emp, milestone, entry }: {
+  emp: { employeeId: string; name: string; reportingManager: string; doj: string; tenureDays: number };
+  milestone: string;
+  entry: { comment: string; postedOn: string };
+}) {
+  const [state, setState] = useState<ClarifySendState>("idle");
+  const [errMsg, setErrMsg] = useState("");
+
+  async function send(e: React.MouseEvent) {
+    e.stopPropagation();
+    setState("sending");
+    setErrMsg("");
+    try {
+      const res = await fetch("/api/feedback-clarification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          employeeId:   emp.employeeId,
+          employeeName: emp.name,
+          managerName:  emp.reportingManager,
+          doj:          emp.doj,
+          tenureDays:   emp.tenureDays,
+          milestone,
+          feedbackText: entry.comment,
+          postedOn:     entry.postedOn,
+        }),
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error ?? "Failed");
+      setState("sent");
+      setTimeout(() => setState("idle"), 5000);
+    } catch (err) {
+      setErrMsg(err instanceof Error ? err.message : "Error");
+      setState("error");
+      setTimeout(() => setState("idle"), 5000);
+    }
+  }
+
+  function preview(e: React.MouseEvent) {
+    e.stopPropagation();
+    const p = new URLSearchParams({
+      employeeId:   emp.employeeId,
+      employeeName: emp.name,
+      managerName:  emp.reportingManager,
+      doj:          emp.doj,
+      tenureDays:   String(emp.tenureDays),
+      milestone,
+      feedbackText: entry.comment,
+      postedOn:     entry.postedOn,
+    });
+    window.open(`/api/feedback-clarification?${p}`, "_blank");
+  }
+
+  if (state === "sent") return (
+    <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium bg-green-50 text-green-700">
+      ✓ Clarification sent
+    </span>
+  );
+  if (state === "error") return (
+    <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium bg-red-50 text-red-600 cursor-default" title={errMsg}>
+      ✕ Failed — {errMsg.slice(0, 60)}
+    </span>
+  );
+
+  return (
+    <div className="flex items-center gap-1.5 mt-2">
+      <button
+        onClick={send}
+        disabled={state === "sending"}
+        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-semibold bg-red-600 text-white hover:bg-red-700 transition-colors disabled:opacity-50"
+      >
+        <svg className="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+        </svg>
+        {state === "sending" ? "Sending…" : "Seek clarification"}
+      </button>
+      <button
+        onClick={preview}
+        title="Preview email"
+        className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium bg-white text-gray-500 border border-gray-200 hover:bg-gray-50 transition-colors"
+      >
+        <svg className="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+        </svg>
+        Preview
+      </button>
+    </div>
+  );
+}
+
+function FeedbackAlert({ tenureDays, feedback, empName, empId, managerName, doj }: {
   tenureDays: number;
   feedback: Employee["feedback"];
   empName?: string;
+  empId?: string;
+  managerName?: string;
+  doj?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState({ top: 0, left: 0 });
@@ -210,6 +306,13 @@ function FeedbackAlert({ tenureDays, feedback, empName }: {
                       <p className="text-[10px] text-amber-700">
                         <span className="font-semibold">Improve: </span>{m.entry.areaOfImprovement}
                       </p>
+                    )}
+                    {q === "below" && empId && empName && managerName && doj && m.entry.comment && (
+                      <ClarifyButton
+                        emp={{ employeeId: empId, name: empName, reportingManager: managerName, doj, tenureDays }}
+                        milestone={m.label.replace(" Review", "")}
+                        entry={{ comment: m.entry.comment, postedOn: m.entry.postedOn }}
+                      />
                     )}
                   </div>
                 );
@@ -574,7 +677,14 @@ export default function EmployeeTable({ employees }: EmployeeTableProps) {
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex flex-col gap-1.5">
-                      <FeedbackAlert tenureDays={emp.tenureDays} feedback={emp.feedback} empName={emp.name} />
+                      <FeedbackAlert
+                        tenureDays={emp.tenureDays}
+                        feedback={emp.feedback}
+                        empName={emp.name}
+                        empId={emp.employeeId}
+                        managerName={emp.reportingManager}
+                        doj={emp.doj}
+                      />
                       {hasMissingFeedback(emp) && <FeedbackAlertButton emp={emp} />}
                     </div>
                   </td>

@@ -57,15 +57,6 @@ function buildClarificationHtml(body: ClarificationBody, managerFirstName: strin
       <p style="margin:0;font-size:13px;color:#374151;line-height:1.6;">${body.feedbackText}</p>
     </div>
 
-    <!-- What we need -->
-    <p style="margin:0 0 8px;font-size:13px;font-weight:700;color:#111827;">Could you please clarify:</p>
-    <ul style="margin:0 0 20px;padding:0 0 0 16px;font-size:13px;color:#374151;line-height:1.8;">
-      <li>Specific areas where the employee's performance fell short of expectations</li>
-      <li>Whether the concerns were communicated to the employee prior to this feedback</li>
-      <li>Any support, coaching, or action plan already in place</li>
-      <li>Your recommended next steps for the employee's performance improvement</li>
-    </ul>
-
     <!-- Employee details -->
     <table style="width:100%;font-size:12px;color:#374151;border-collapse:collapse;margin-bottom:20px;background:#f9fafb;border-radius:8px;overflow:hidden;">
       <tr>
@@ -91,7 +82,7 @@ function buildClarificationHtml(body: ClarificationBody, managerFirstName: strin
     </table>
 
     <p style="margin:0 0 8px;font-size:14px;color:#374151;">
-      Please reply to this email at your earliest convenience or contact HR directly to discuss.
+      Please reply to this email at your earliest convenience.
     </p>
 
     <p style="margin:20px 0 0;font-size:11px;color:#9ca3af;">

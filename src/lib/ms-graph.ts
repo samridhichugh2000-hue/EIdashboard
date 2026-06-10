@@ -19,7 +19,10 @@ export async function getGraphToken(): Promise<string> {
     }
   );
 
-  if (!res.ok) throw new Error(`Graph token fetch failed: ${res.status}`);
+  if (!res.ok) {
+    const body = await res.text().catch(() => "(unreadable)");
+    throw new Error(`Graph token fetch failed: ${res.status} — ${body}`);
+  }
   const data = await res.json();
   if (!data.access_token) throw new Error(`Graph token error: ${data.error_description ?? JSON.stringify(data)}`);
 

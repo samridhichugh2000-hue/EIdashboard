@@ -645,7 +645,8 @@ export default function EmployeeTable({ employees }: EmployeeTableProps) {
         {/* Left scroll arrow */}
         <button
           onClick={() => tableScrollRef.current?.scrollBy({ left: -340, behavior: "smooth" })}
-          className={`absolute left-0 top-1/2 -translate-y-1/2 z-20 h-12 w-9 flex items-center justify-center bg-white border border-gray-200 rounded-r-xl shadow-md text-gray-500 hover:text-[#1E99C0] hover:bg-[#e6f7f5] transition-all duration-200 ${canScrollLeft ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}
+          disabled={!canScrollLeft}
+          className={`absolute left-0 top-1/2 -translate-y-1/2 z-20 h-12 w-9 flex items-center justify-center bg-white border border-gray-200 rounded-r-xl shadow-md transition-all duration-200 ${canScrollLeft ? "text-gray-600 hover:text-[#1E99C0] hover:bg-[#e6f7f5] cursor-pointer" : "text-gray-300 cursor-default"}`}
           aria-label="Scroll left"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -656,7 +657,8 @@ export default function EmployeeTable({ employees }: EmployeeTableProps) {
         {/* Right scroll arrow */}
         <button
           onClick={() => tableScrollRef.current?.scrollBy({ left: 340, behavior: "smooth" })}
-          className={`absolute right-0 top-1/2 -translate-y-1/2 z-20 h-12 w-9 flex items-center justify-center bg-white border border-gray-200 rounded-l-xl shadow-md text-gray-500 hover:text-[#1E99C0] hover:bg-[#e6f7f5] transition-all duration-200 ${canScrollRight ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}
+          disabled={!canScrollRight}
+          className={`absolute right-0 top-1/2 -translate-y-1/2 z-20 h-12 w-9 flex items-center justify-center bg-white border border-gray-200 rounded-l-xl shadow-md transition-all duration-200 ${canScrollRight ? "text-gray-600 hover:text-[#1E99C0] hover:bg-[#e6f7f5] cursor-pointer" : "text-gray-300 cursor-default"}`}
           aria-label="Scroll right"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>

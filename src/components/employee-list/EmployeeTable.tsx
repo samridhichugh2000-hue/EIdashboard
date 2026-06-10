@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { Employee, NREntry, PIPStatus, UtilizationEntry } from "@/types/employee";
 import { formatDate, getTenureBadgeClass, getStatusChipClass, getFeedbackQuality } from "@/lib/utils";
@@ -44,7 +45,26 @@ function UtilCell({ entry }: { entry: UtilizationEntry | undefined }) {
   );
 }
 
-function FeedbackAlert({ tenureDays, feedback }: { tenureDays: number; feedback: Employee["feedback"] }) {
+function FeedbackAlert({ tenureDays, feedback, empName }: {
+  tenureDays: number;
+  feedback: Employee["feedback"];
+  empName?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [pos, setPos] = useState({ top: 0, left: 0 });
+  const btnRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const close = () => setOpen(false);
+    document.addEventListener("mousedown", close);
+    document.addEventListener("scroll", close, true);
+    return () => {
+      document.removeEventListener("mousedown", close);
+      document.removeEventListener("scroll", close, true);
+    };
+  }, [open]);
+
   if (tenureDays < 30) return <span className="text-gray-300 text-xs">—</span>;
 
   const missing: string[] = [];
@@ -52,52 +72,163 @@ function FeedbackAlert({ tenureDays, feedback }: { tenureDays: number; feedback:
   if (tenureDays >= 60 && !feedback.d60) missing.push("60d");
   if (tenureDays >= 90 && !feedback.d90) missing.push("90d");
 
-  // Check quality of received feedbacks using AI classification (with heuristic fallback)
   const received = [feedback.d30, feedback.d60, feedback.d90].filter(Boolean);
   const qualities = received.map(e => getFeedbackQuality(e!));
   const hasBelow = qualities.some(q => q === "below");
   const hasAbove = qualities.some(q => q === "above");
 
+  function handleClick(e: React.MouseEvent) {
+    e.stopPropagation();
+    if (!btnRef.current) return;
+    const rect = btnRef.current.getBoundingClientRect();
+    const popupWidth = 380;
+    let left = rect.left;
+    if (left + popupWidth > window.innerWidth - 16) left = window.innerWidth - popupWidth - 16;
+    setPos({ top: rect.bottom + 6, left });
+    setOpen(v => !v);
+  }
+
+  let badgeClass = "";
+  let badgeContent: React.ReactNode;
+
   if (missing.length > 0) {
-    return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200 whitespace-nowrap">
+    badgeClass = "bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100";
+    badgeContent = (
+      <>
         <svg className="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
         </svg>
         {missing.join(" / ")} not submitted
-      </span>
+      </>
     );
-  }
-
-  if (hasBelow) {
-    return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-red-50 text-red-700 border border-red-200 whitespace-nowrap">
+  } else if (hasBelow) {
+    badgeClass = "bg-red-50 text-red-700 border-red-200 hover:bg-red-100";
+    badgeContent = (
+      <>
         <svg className="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
         </svg>
         Below Satisfactory
-      </span>
+      </>
     );
-  }
-
-  if (hasAbove) {
-    return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap">
+  } else if (hasAbove) {
+    badgeClass = "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100";
+    badgeContent = (
+      <>
         <svg className="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
         </svg>
         Above Satisfactory
-      </span>
+      </>
+    );
+  } else {
+    badgeClass = "bg-green-50 text-green-700 border-green-200 hover:bg-green-100";
+    badgeContent = (
+      <>
+        <svg className="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+        </svg>
+        Satisfactory
+      </>
     );
   }
 
+  const milestones = [
+    { key: "d30", label: "30-Day Review", entry: feedback.d30, minDays: 30 },
+    { key: "d60", label: "60-Day Review", entry: feedback.d60, minDays: 60 },
+    { key: "d90", label: "90-Day Review", entry: feedback.d90, minDays: 90 },
+  ] as const;
+
+  const receivedCount = milestones.filter(m => m.entry).length;
+  const pendingCount  = milestones.filter(m => !m.entry && tenureDays >= m.minDays).length;
+
   return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-200 whitespace-nowrap">
-      <svg className="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-      </svg>
-      Satisfactory
-    </span>
+    <>
+      <button
+        ref={btnRef}
+        onClick={handleClick}
+        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border transition-colors whitespace-nowrap cursor-pointer ${badgeClass}`}
+      >
+        {badgeContent}
+      </button>
+
+      {open && createPortal(
+        <div
+          onMouseDown={e => e.stopPropagation()}
+          style={{ position: "fixed", top: pos.top, left: pos.left, width: 380, zIndex: 9999 }}
+          className="bg-white border border-gray-200 rounded-xl shadow-2xl overflow-hidden"
+        >
+          {/* Header */}
+          <div className="px-4 py-3 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
+            <div>
+              <p className="text-sm font-semibold text-gray-900">
+                {empName ? `${empName} — Feedback` : "Feedback Timeline"}
+              </p>
+              <p className="text-xs text-gray-500 mt-0.5">
+                {receivedCount} received · {pendingCount > 0 ? `${pendingCount} pending` : "all submitted"}
+              </p>
+            </div>
+            <button
+              onMouseDown={e => { e.stopPropagation(); setOpen(false); }}
+              className="text-gray-400 hover:text-gray-700 p-1 rounded-lg hover:bg-gray-200 transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Milestones */}
+          <div className="max-h-80 overflow-y-auto divide-y divide-gray-100">
+            {milestones.map(m => {
+              if (m.entry) {
+                const q      = getFeedbackQuality(m.entry);
+                const qColor = q === "below" ? "text-red-600"    : q === "above" ? "text-emerald-700" : "text-green-700";
+                const qBg    = q === "below" ? "bg-red-50"       : q === "above" ? "bg-emerald-50"    : "bg-green-50";
+                const qLabel = q === "below" ? "Below Satisfactory" : q === "above" ? "Above Satisfactory" : "Satisfactory";
+                return (
+                  <div key={m.key} className={`px-4 py-3 ${qBg}`}>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-xs font-semibold text-gray-700">{m.label}</span>
+                      <span className={`text-[10px] font-bold ${qColor}`}>{qLabel}</span>
+                    </div>
+                    <p className="text-[10px] text-gray-400 mb-1.5">{m.entry.postedOn}</p>
+                    {m.entry.comment && (
+                      <p className="text-xs text-gray-700 leading-snug mb-1.5">{m.entry.comment}</p>
+                    )}
+                    {m.entry.areaOfStrength && (
+                      <p className="text-[10px] text-green-700 mb-0.5">
+                        <span className="font-semibold">Strength: </span>{m.entry.areaOfStrength}
+                      </p>
+                    )}
+                    {m.entry.areaOfImprovement && (
+                      <p className="text-[10px] text-amber-700">
+                        <span className="font-semibold">Improve: </span>{m.entry.areaOfImprovement}
+                      </p>
+                    )}
+                  </div>
+                );
+              }
+              const due = tenureDays >= m.minDays;
+              return (
+                <div key={m.key} className={due ? "px-4 py-3 bg-amber-50" : "px-4 py-3 bg-gray-50"}>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-gray-700">{m.label}</span>
+                    <span className={`text-[10px] font-bold ${due ? "text-amber-600" : "text-gray-400"}`}>
+                      {due ? "Pending" : "Not yet due"}
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-400 italic mt-1">
+                    {due ? "Feedback not yet submitted" : `Available after day ${m.minDays}`}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        </div>,
+        document.body
+      )}
+    </>
   );
 }
 
@@ -438,7 +569,7 @@ export default function EmployeeTable({ employees }: EmployeeTableProps) {
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex flex-col gap-1.5">
-                      <FeedbackAlert tenureDays={emp.tenureDays} feedback={emp.feedback} />
+                      <FeedbackAlert tenureDays={emp.tenureDays} feedback={emp.feedback} empName={emp.name} />
                       {hasMissingFeedback(emp) && <FeedbackAlertButton emp={emp} />}
                     </div>
                   </td>

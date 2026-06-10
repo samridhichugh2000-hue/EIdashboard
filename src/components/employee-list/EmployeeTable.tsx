@@ -101,6 +101,61 @@ function FeedbackAlert({ tenureDays, feedback }: { tenureDays: number; feedback:
   );
 }
 
+// ── filter definitions ──────────────────────────────────────────────────────
+
+function hasBelowSatisfactory(emp: Employee): boolean {
+  const received = [emp.feedback.d30, emp.feedback.d60, emp.feedback.d90].filter(Boolean);
+  return received.some(e => getFeedbackQuality(e!) === "below");
+}
+
+function hasMissingFeedback(emp: Employee): boolean {
+  return (
+    (emp.tenureDays >= 30 && !emp.feedback.d30) ||
+    (emp.tenureDays >= 60 && !emp.feedback.d60) ||
+    (emp.tenureDays >= 90 && !emp.feedback.d90)
+  );
+}
+
+const FILTER_DEFS = [
+  {
+    key:   "below"            as const,
+    label: "Below Satisfactory",
+    match: hasBelowSatisfactory,
+    off:   "bg-red-50 text-red-700 border-red-200 hover:bg-red-100",
+    on:    "bg-red-500 text-white border-red-500",
+  },
+  {
+    key:   "pa_pip"           as const,
+    label: "PA / PIP",
+    match: (e: Employee) => e.pipStatus !== null,
+    off:   "bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100",
+    on:    "bg-amber-500 text-white border-amber-500",
+  },
+  {
+    key:   "in_progress"      as const,
+    label: "In Progress",
+    match: (e: Employee) => e.finalStatus === "In Progress",
+    off:   "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100",
+    on:    "bg-blue-500 text-white border-blue-500",
+  },
+  {
+    key:   "closed"           as const,
+    label: "Closed",
+    match: (e: Employee) => e.finalStatus === "Confirmed",
+    off:   "bg-teal-50 text-teal-700 border-teal-200 hover:bg-teal-100",
+    on:    "bg-teal-500 text-white border-teal-500",
+  },
+  {
+    key:   "feedback_missing" as const,
+    label: "Feedback Pending",
+    match: hasMissingFeedback,
+    off:   "bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100",
+    on:    "bg-orange-500 text-white border-orange-500",
+  },
+];
+
+type FilterKey = typeof FILTER_DEFS[number]["key"];
+
 // "1 Apr 2026" or "30 Apr 2026" → Date (API returns D MMM YYYY)
 function parsePIPDate(dateStr: string): Date | null {
   if (!dateStr) return null;
@@ -142,12 +197,21 @@ function PIPChip({ pipStatus }: { pipStatus: PIPStatus | null }) {
 export default function EmployeeTable({ employees }: EmployeeTableProps) {
   const router = useRouter();
   const [search, setSearch] = useState("");
+  const [activeFilters, setActiveFilters] = useState<Set<FilterKey>>(new Set());
   const [selected, setSelected] = useState<Employee | null>(null);
   const [employeeList, setEmployeeList] = useState<Employee[]>(employees);
   const category = employeeList[0]?.category;
   const showNR   = category === "sales";
   const showUtil = category === "trainer";
   const extraCols = (showNR || showUtil) ? 3 : 0;
+
+  function toggleFilter(key: FilterKey) {
+    setActiveFilters(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
+  }
 
   function handleHRUpdate(employeeId: string, confirmed: boolean, hrRemarks: string | null) {
     const newStatus = confirmed ? "Confirmed" as const : ("In Progress" as const);
@@ -161,8 +225,15 @@ export default function EmployeeTable({ employees }: EmployeeTableProps) {
 
   const filtered = employeeList.filter((e) => {
     const q = search.toLowerCase();
-    return e.name.toLowerCase().includes(q) || e.employeeId.toLowerCase().includes(q);
+    if (q && !e.name.toLowerCase().includes(q) && !e.employeeId.toLowerCase().includes(q)) return false;
+    if (activeFilters.size === 0) return true;
+    return FILTER_DEFS.some(f => activeFilters.has(f.key) && f.match(e));
   });
+
+  // Counts computed from full list (unaffected by search / other filters) — shown in chips
+  const filterCounts = Object.fromEntries(
+    FILTER_DEFS.map(f => [f.key, employeeList.filter(f.match).length])
+  ) as Record<FilterKey, number>;
 
   const stats = {
     total:      filtered.length,
@@ -174,8 +245,9 @@ export default function EmployeeTable({ employees }: EmployeeTableProps) {
 
   return (
     <div>
-      <div className="mb-4">
-        <div className="relative max-w-sm">
+      {/* Search + filter row */}
+      <div className="mb-3 flex flex-wrap items-center gap-3">
+        <div className="relative">
           <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
           </svg>
@@ -184,8 +256,36 @@ export default function EmployeeTable({ employees }: EmployeeTableProps) {
             placeholder="Search by name or employee ID…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#28C5BE]/40 focus:border-[#28C5BE] bg-white shadow-sm"
+            className="pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#28C5BE]/40 focus:border-[#28C5BE] bg-white shadow-sm w-72"
           />
+        </div>
+
+        {/* Filter chips */}
+        <div className="flex flex-wrap items-center gap-2">
+          {FILTER_DEFS.map(f => {
+            const active = activeFilters.has(f.key);
+            const count  = filterCounts[f.key];
+            return (
+              <button
+                key={f.key}
+                onClick={() => toggleFilter(f.key)}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${active ? f.on : f.off}`}
+              >
+                {f.label}
+                <span className={`inline-flex items-center justify-center min-w-[18px] h-[18px] rounded-full text-[10px] font-bold ${active ? "bg-white/30" : "bg-white border border-current/20"}`}>
+                  {count}
+                </span>
+              </button>
+            );
+          })}
+          {activeFilters.size > 0 && (
+            <button
+              onClick={() => setActiveFilters(new Set())}
+              className="text-xs text-gray-400 hover:text-gray-600 px-2 py-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+            >
+              Clear filters
+            </button>
+          )}
         </div>
       </div>
 

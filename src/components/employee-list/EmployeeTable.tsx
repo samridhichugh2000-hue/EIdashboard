@@ -7,7 +7,7 @@ import { formatDate, getTenureBadgeClass, getStatusChipClass, getFeedbackQuality
 import EmployeeModal from "@/components/modal/EmployeeModal";
 import IncidentBadge from "@/components/IncidentBadge";
 import HRActionButton from "@/components/HRActionButton";
-import StatsRow from "./StatsRow";
+
 
 interface EmployeeTableProps { employees: Employee[]; }
 
@@ -235,14 +235,6 @@ export default function EmployeeTable({ employees }: EmployeeTableProps) {
     FILTER_DEFS.map(f => [f.key, employeeList.filter(f.match).length])
   ) as Record<FilterKey, number>;
 
-  const stats = {
-    total:      filtered.length,
-    confirmed:  filtered.filter((e) => e.finalStatus === "Confirmed").length,
-    inProgress: filtered.filter((e) => e.finalStatus === "In Progress").length,
-    paIssued:   filtered.filter((e) => e.finalStatus === "PA Issued").length,
-    pipIssued:  filtered.filter((e) => e.finalStatus === "PIP Issued").length,
-  };
-
   return (
     <div>
       {/* Search + filter row */}
@@ -289,7 +281,6 @@ export default function EmployeeTable({ employees }: EmployeeTableProps) {
         </div>
       </div>
 
-      <StatsRow stats={stats} />
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-x-auto">
         <table className="w-full text-sm">

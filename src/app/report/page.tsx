@@ -291,7 +291,7 @@ export default async function ReportPage() {
       {/* Summary */}
       <div className="mb-6 grid grid-cols-4 gap-3">
         {[
-          { label: "Total",        value: reportPool.length, color: "bg-[#e6f7f5] text-[#1E99C0]" },
+          { label: "Total",        value: reportPool.length, color: "bg-[#EEF2FF] text-[#1B2559]" },
           { label: "Sales",        value: sales.length,   color: "bg-blue-50 text-blue-700"        },
           { label: "Trainer",      value: trainer.length, color: "bg-purple-50 text-purple-700"    },
           { label: "PT Team",      value: pt.length,      color: "bg-amber-50 text-amber-700"      },

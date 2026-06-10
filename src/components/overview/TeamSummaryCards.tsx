@@ -3,58 +3,56 @@
 import { useRouter } from "next/navigation";
 import { TeamStats } from "@/types/employee";
 
-interface TeamSummaryCardsProps { teams: TeamStats[]; }
-
-const STATUS_BARS = [
-  { key: "confirmed"  as const, label: "Closed",      color: "bg-[#28C5BE]" },
-  { key: "inProgress" as const, label: "In Progress", color: "bg-blue-400"  },
-  { key: "paIssued"   as const, label: "PA Issued",   color: "bg-amber-400" },
-  { key: "pipIssued"  as const, label: "PIP Issued",  color: "bg-red-400"   },
-];
-
-const TEAM_GRADIENTS: Record<string, string> = {
-  sales:   "from-[#28C5BE] to-[#1E99C0]",
-  trainer: "from-[#6C63FF] to-[#4F46E5]",
-  pt:      "from-[#F59E0B] to-[#D97706]",
+const TEAM_CONFIG: Record<string, { bar: string; badge: string; badgeText: string; icon: string }> = {
+  sales:   { bar: "bg-violet-500", badge: "bg-violet-50",  badgeText: "text-violet-600", icon: "💼" },
+  trainer: { bar: "bg-blue-500",   badge: "bg-blue-50",    badgeText: "text-blue-600",   icon: "📚" },
+  pt:      { bar: "bg-emerald-500",badge: "bg-emerald-50", badgeText: "text-emerald-600",icon: "🏋️" },
 };
 
-export default function TeamSummaryCards({ teams }: TeamSummaryCardsProps) {
+export default function TeamSummaryCards({ teams }: { teams: TeamStats[] }) {
   const router = useRouter();
 
   return (
-    <div className="grid grid-cols-3 gap-4">
-      {teams.map((team) => (
-        <div
-          key={team.category}
-          onClick={() => router.push(`/category/${team.category}`)}
-          className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 cursor-pointer hover:shadow-md hover:translate-y-[-2px] transition-all duration-200"
-        >
-          {/* Gradient header */}
-          <div className={`rounded-xl bg-gradient-to-r ${TEAM_GRADIENTS[team.category]} p-4 mb-4 flex items-center justify-between`}>
-            <span className="text-white font-semibold text-base">{team.label}</span>
-            <span className="text-white font-bold text-3xl">{team.total}</span>
-          </div>
+    <div className="bg-white rounded-2xl shadow-sm px-5 py-4">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-sm font-semibold text-gray-800">Ongoing Teams</h3>
+      </div>
 
-          {/* Progress bars */}
-          <div className="space-y-2.5">
-            {STATUS_BARS.map(({ key, label, color }) => {
-              const count = team[key];
-              const pct = team.total > 0 ? Math.round((count / team.total) * 100) : 0;
-              return (
-                <div key={key}>
-                  <div className="flex justify-between text-xs mb-1">
-                    <span className="text-gray-500">{label}</span>
-                    <span className="font-semibold text-gray-700">{count}</span>
-                  </div>
-                  <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                    <div className={`h-full ${color} rounded-full transition-all duration-500`} style={{ width: `${pct}%` }} />
-                  </div>
+      <div className="space-y-4">
+        {teams.map((team) => {
+          const cfg = TEAM_CONFIG[team.category];
+          const closedPct = team.total > 0 ? Math.round((team.confirmed / team.total) * 100) : 0;
+
+          return (
+            <div
+              key={team.category}
+              onClick={() => router.push(`/category/${team.category}`)}
+              className="cursor-pointer group"
+            >
+              <div className="flex items-center justify-between mb-1.5">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm leading-none">{cfg.icon}</span>
+                  <span className="text-sm font-medium text-gray-700 group-hover:text-violet-600 transition-colors">
+                    {team.label}
+                  </span>
                 </div>
-              );
-            })}
-          </div>
-        </div>
-      ))}
+                <div className="flex items-center gap-2.5">
+                  <span className="text-xs text-gray-400">{closedPct}% closed</span>
+                  <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${cfg.badge} ${cfg.badgeText}`}>
+                    {team.total}
+                  </span>
+                </div>
+              </div>
+              <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                <div
+                  className={`h-full ${cfg.bar} rounded-full transition-all duration-500`}
+                  style={{ width: `${closedPct}%` }}
+                />
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

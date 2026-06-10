@@ -6,18 +6,17 @@ import {
 } from "recharts";
 import { OverviewStats, TeamStats } from "@/types/employee";
 
-// Muted, darker solid colors — no opacity
 const PALETTE = {
-  closed:     "#0D9488",   // teal-600
-  inProgress: "#4F46E5",   // indigo-600
-  paIssued:   "#D97706",   // amber-600
-  pipIssued:  "#B91C1C",   // red-700
+  closed:     "#10B981",   // emerald-500
+  inProgress: "#6C63FF",   // violet
+  paIssued:   "#F59E0B",   // amber-400
+  pipIssued:  "#EF4444",   // red-500
 };
 
 const TEAM_PALETTE: Record<string, string> = {
-  sales:   "#6366F1",   // indigo-500
-  trainer: "#8B5CF6",   // violet-500
-  pt:      "#D97706",   // amber-600
+  sales:   "#6C63FF",   // violet
+  trainer: "#3B82F6",   // blue-500
+  pt:      "#10B981",   // emerald-500
 };
 
 // White number rendered inside each donut slice

@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect, Suspense } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { Employee, NREntry, PIPStatus, UtilizationEntry } from "@/types/employee";
+import DateRangeFilter from "@/components/DateRangeFilter";
 import { formatDate, getTenureBadgeClass, getStatusChipClass, getFeedbackQuality } from "@/lib/utils";
 import EmployeeModal from "@/components/modal/EmployeeModal";
 import IncidentBadge from "@/components/IncidentBadge";
@@ -550,8 +551,8 @@ function PIPChip({ pipStatus }: { pipStatus: PIPStatus | null }) {
 export default function EmployeeTable({ employees }: EmployeeTableProps) {
   const router = useRouter();
   const [search, setSearch] = useState("");
-  const [activeFilters, setActiveFilters] = useState<Set<FilterKey>>(new Set());
   const [selected, setSelected] = useState<Employee | null>(null);
+  const [activeCardKey, setActiveCardKey] = useState<string | null>(null);
   const [employeeList, setEmployeeList] = useState<Employee[]>(employees);
   const category = employeeList[0]?.category;
   const showNR   = category === "sales";
@@ -582,14 +583,6 @@ export default function EmployeeTable({ employees }: EmployeeTableProps) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  function toggleFilter(key: FilterKey) {
-    setActiveFilters(prev => {
-      const next = new Set(prev);
-      if (next.has(key)) next.delete(key); else next.add(key);
-      return next;
-    });
-  }
-
   function handleHRUpdate(employeeId: string, confirmed: boolean, hrRemarks: string | null) {
     const newStatus = confirmed ? "Confirmed" as const : ("In Progress" as const);
     setEmployeeList((prev) =>
@@ -600,62 +593,76 @@ export default function EmployeeTable({ employees }: EmployeeTableProps) {
     );
   }
 
+  const STATUS_CARDS = [
+    { key: "total",            label: "Total",               match: null,                                           value: employeeList.length,                                              solidBg: "bg-[#7C3AED]" },
+    { key: "confirmed",        label: "Closed",              match: (e: Employee) => e.finalStatus === "Confirmed", value: employeeList.filter(e => e.finalStatus === "Confirmed").length,   solidBg: "bg-[#059669]" },
+    { key: "in_progress",      label: "In Progress",         match: (e: Employee) => e.finalStatus === "In Progress", value: employeeList.filter(e => e.finalStatus === "In Progress").length, solidBg: "bg-[#4F46E5]" },
+    { key: "pa_issued",        label: "PA Issued",           match: (e: Employee) => e.finalStatus === "PA Issued", value: employeeList.filter(e => e.finalStatus === "PA Issued").length,   solidBg: "bg-[#D97706]" },
+    { key: "pip_issued",       label: "PIP Issued",          match: (e: Employee) => e.finalStatus === "PIP Issued", value: employeeList.filter(e => e.finalStatus === "PIP Issued").length,  solidBg: "bg-[#DC2626]" },
+    { key: "below",            label: "Below Satisfactory",  match: (e: Employee) => hasBelowSatisfactory(e),       value: employeeList.filter(hasBelowSatisfactory).length,                 solidBg: "bg-[#BE185D]" },
+    { key: "feedback_missing", label: "Feedback Pending",    match: (e: Employee) => hasMissingFeedback(e),         value: employeeList.filter(hasMissingFeedback).length,                   solidBg: "bg-[#C2410C]" },
+  ];
+
   const filtered = employeeList.filter((e) => {
     const q = search.toLowerCase();
     if (q && !e.name.toLowerCase().includes(q) && !e.employeeId.toLowerCase().includes(q)) return false;
-    if (activeFilters.size === 0) return true;
-    return FILTER_DEFS.some(f => activeFilters.has(f.key) && f.match(e));
+    if (activeCardKey && activeCardKey !== "total") {
+      const card = STATUS_CARDS.find(c => c.key === activeCardKey);
+      if (card?.match && !card.match(e)) return false;
+    }
+    return true;
   });
-
-  // Counts computed from full list (unaffected by search / other filters) — shown in chips
-  const filterCounts = Object.fromEntries(
-    FILTER_DEFS.map(f => [f.key, employeeList.filter(f.match).length])
-  ) as Record<FilterKey, number>;
 
   return (
     <div>
-      {/* Search + filter row */}
-      <div className="mb-3 flex flex-wrap items-center gap-3">
-        <div className="relative">
-          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
-          </svg>
-          <input
-            type="text"
-            placeholder="Search by name or employee ID…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300/40 focus:border-indigo-400 bg-white shadow-sm w-72"
-          />
-        </div>
-
-        {/* Filter chips */}
-        <div className="flex flex-wrap items-center gap-2">
-          {FILTER_DEFS.map(f => {
-            const active = activeFilters.has(f.key);
-            const count  = filterCounts[f.key];
-            return (
-              <button
-                key={f.key}
-                onClick={() => toggleFilter(f.key)}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${active ? f.on : f.off}`}
-              >
-                {f.label}
-                <span className={`inline-flex items-center justify-center min-w-[18px] h-[18px] rounded-full text-[10px] font-bold ${active ? "bg-white/30" : "bg-white border border-current/20"}`}>
-                  {count}
-                </span>
-              </button>
-            );
-          })}
-          {activeFilters.size > 0 && (
+      {/* Status summary cards */}
+      <div className="flex gap-2 mb-3">
+        {STATUS_CARDS.map((card) => {
+          const isActive = activeCardKey === card.key;
+          return (
             <button
-              onClick={() => setActiveFilters(new Set())}
+              key={card.key}
+              onClick={() => setActiveCardKey(isActive || card.key === "total" ? null : card.key)}
+              className={`flex-1 rounded-2xl px-4 py-3.5 flex flex-col cursor-pointer transition-all duration-200 text-left ${card.solidBg}
+                ${isActive
+                  ? "ring-[3px] ring-white/60 ring-offset-2 ring-offset-transparent shadow-lg brightness-110"
+                  : "hover:brightness-110 hover:shadow-md opacity-90 hover:opacity-100"
+                }`}
+            >
+              <p className="text-[11px] font-medium text-white/70 leading-tight mb-1.5">{card.label}</p>
+              <p className="text-2xl font-bold text-white leading-none">{card.value}</p>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Search row */}
+      <div className="mb-3 flex items-center gap-3 justify-between">
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
+            </svg>
+            <input
+              type="text"
+              placeholder="Search by name or employee ID…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300/40 focus:border-indigo-400 bg-white shadow-sm w-72"
+            />
+          </div>
+          {activeCardKey && activeCardKey !== "total" && (
+            <button
+              onClick={() => setActiveCardKey(null)}
               className="text-xs text-gray-400 hover:text-gray-600 px-2 py-1.5 rounded-lg hover:bg-gray-100 transition-colors"
             >
-              Clear filters
+              Clear filter
             </button>
           )}
         </div>
+        <Suspense>
+          <DateRangeFilter />
+        </Suspense>
       </div>
 
 

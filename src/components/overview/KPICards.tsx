@@ -1,49 +1,71 @@
 import { OverviewStats } from "@/types/employee";
 
-interface KPICardsProps { stats: OverviewStats; }
-
-const CARD_CONFIG = [
-  { key: "total",      label: "Total in EI",  dot: "bg-[#28C5BE]",    bar: "bg-[#28C5BE]"    },
-  { key: "confirmed",  label: "Closed",        dot: "bg-emerald-500",  bar: "bg-emerald-500"  },
-  { key: "inProgress", label: "In Progress",   dot: "bg-blue-500",     bar: "bg-blue-500"     },
-  { key: "paIssued",   label: "PA Issued",     dot: "bg-amber-400",    bar: "bg-amber-400"    },
-  { key: "pipIssued",  label: "PIP Issued",    dot: "bg-red-400",      bar: "bg-red-400"      },
+const RINGS = [
+  { key: "confirmed"  as const, label: "Closed",      stroke: "#10B981", track: "#D1FAE5" },
+  { key: "inProgress" as const, label: "In Progress", stroke: "#6C63FF", track: "#EDE9FE" },
+  { key: "paIssued"   as const, label: "PA Issued",   stroke: "#F59E0B", track: "#FEF3C7" },
+  { key: "pipIssued"  as const, label: "PIP Issued",  stroke: "#EF4444", track: "#FEE2E2" },
 ];
 
-export default function KPICards({ stats }: KPICardsProps) {
+function CircleRing({ value, total, stroke, track, label }: {
+  value: number; total: number; stroke: string; track: string; label: string;
+}) {
+  const pct = total > 0 ? value / total : 0;
+  const r = 24;
+  const circ = 2 * Math.PI * r;
+  const dash = circ * pct;
+  return (
+    <div className="flex flex-col items-center gap-2">
+      <div className="relative w-[60px] h-[60px]">
+        <svg className="w-full h-full -rotate-90" viewBox="0 0 60 60">
+          <circle cx="30" cy="30" r={r} fill="none" stroke={track} strokeWidth="5" />
+          <circle cx="30" cy="30" r={r} fill="none" stroke={stroke} strokeWidth="5"
+            strokeDasharray={`${dash} ${circ}`} strokeLinecap="round" />
+        </svg>
+        <span className="absolute inset-0 flex items-center justify-center text-sm font-bold text-gray-800">
+          {value}
+        </span>
+      </div>
+      <span className="text-[11px] text-gray-500 text-center leading-tight whitespace-nowrap">{label}</span>
+    </div>
+  );
+}
+
+export default function KPICards({ stats }: { stats: OverviewStats }) {
   const values: Record<string, number> = {
-    total:      stats.total,
-    confirmed:  stats.confirmed,
+    confirmed: stats.confirmed,
     inProgress: stats.inProgress,
-    paIssued:   stats.paIssued,
-    pipIssued:  stats.pipIssued,
+    paIssued: stats.paIssued,
+    pipIssued: stats.pipIssued,
   };
-  const total = stats.total;
 
   return (
-    <div className="grid grid-cols-5 gap-4">
-      {CARD_CONFIG.map(({ key, label, dot, bar }) => {
-        const value = values[key];
-        const pct = total > 0 ? Math.round((value / total) * 100) : 0;
-        return (
-          <div key={key} className="bg-white rounded-xl shadow-[0_2px_12px_rgba(0,0,0,0.06)] px-4 py-4 flex flex-col gap-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5">
-                <span className={`w-2 h-2 rounded-full ${dot} shrink-0`} />
-                <p className="text-xs font-medium text-gray-500">{label}</p>
-              </div>
-              <span className="text-[10px] font-semibold text-gray-400 tabular-nums">{pct}%</span>
-            </div>
-            <p className="text-3xl font-bold text-gray-900 tracking-tight leading-none">{value}</p>
-            <div className="h-1 bg-gray-100 rounded-full overflow-hidden">
-              <div
-                className={`h-full ${bar} rounded-full transition-all duration-700`}
-                style={{ width: `${pct}%` }}
-              />
-            </div>
-          </div>
-        );
-      })}
+    <div className="bg-white rounded-2xl shadow-sm px-6 py-5">
+      <div className="flex items-center justify-between gap-6">
+        {/* Left: big total */}
+        <div className="shrink-0">
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Total in EI</p>
+          <p className="text-6xl font-extrabold text-gray-900 leading-none tabular-nums">{stats.total}</p>
+          <p className="text-xs text-gray-400 mt-2">Active employees</p>
+        </div>
+
+        {/* Divider */}
+        <div className="w-px h-16 bg-gray-100 shrink-0" />
+
+        {/* Right: mini rings */}
+        <div className="flex items-center gap-6 flex-1 justify-around">
+          {RINGS.map(({ key, label, stroke, track }) => (
+            <CircleRing
+              key={key}
+              value={values[key]}
+              total={stats.total}
+              stroke={stroke}
+              track={track}
+              label={label}
+            />
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

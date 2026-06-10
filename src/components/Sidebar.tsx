@@ -18,16 +18,16 @@ export default function Sidebar({ counts }: SidebarProps) {
   const pathname = usePathname();
 
   return (
-    <aside className="w-[220px] min-h-screen flex flex-col shrink-0 bg-[#1B2559] border-r border-white/[0.06]">
+    <aside className="w-[220px] min-h-screen flex flex-col shrink-0 bg-[#3B1178] border-r border-white/[0.06]">
 
       {/* Logo */}
       <div className="px-5 pt-6 pb-5 flex items-center gap-3">
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#28C5BE] to-[#1E99C0] flex items-center justify-center shrink-0 shadow-lg shadow-teal-900/40">
+        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-400 to-purple-600 flex items-center justify-center shrink-0 shadow-lg shadow-purple-900/40">
           <span className="text-white text-xs font-bold tracking-tight">EI</span>
         </div>
         <div className="min-w-0">
           <p className="text-white text-sm font-semibold leading-tight truncate">EI Dashboard</p>
-          <p className="text-slate-500 text-[10px] leading-tight mt-0.5 truncate">Koenig Solutions</p>
+          <p className="text-violet-300/50 text-[10px] leading-tight mt-0.5 truncate">Koenig Solutions</p>
         </div>
       </div>
 
@@ -41,7 +41,7 @@ export default function Sidebar({ counts }: SidebarProps) {
         } />
 
         {/* Teams section */}
-        <p className="px-3 pt-5 pb-2 text-[10px] font-semibold text-white/30 uppercase tracking-widest">
+        <p className="px-3 pt-5 pb-2 text-[10px] font-semibold text-violet-300/50 uppercase tracking-widest">
           Teams
         </p>
 
@@ -62,7 +62,7 @@ export default function Sidebar({ counts }: SidebarProps) {
         })}
 
         {/* Reports section */}
-        <p className="px-3 pt-5 pb-2 text-[10px] font-semibold text-white/30 uppercase tracking-widest">
+        <p className="px-3 pt-5 pb-2 text-[10px] font-semibold text-violet-300/50 uppercase tracking-widest">
           Reports
         </p>
 
@@ -77,13 +77,13 @@ export default function Sidebar({ counts }: SidebarProps) {
       <div className="px-5 py-5 border-t border-white/[0.06]">
         <div className="flex items-center gap-2.5">
           <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center shrink-0">
-            <svg className="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <svg className="w-3.5 h-3.5 text-violet-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
             </svg>
           </div>
           <div className="min-w-0">
-            <p className="text-slate-300 text-xs font-medium leading-tight truncate">HR Team</p>
-            <p className="text-slate-600 text-[10px] leading-tight mt-0.5">v3.0 · Extended Interview</p>
+            <p className="text-violet-100 text-xs font-medium leading-tight truncate">HR Team</p>
+            <p className="text-violet-300/50 text-[10px] leading-tight mt-0.5">v3.0 · Extended Interview</p>
           </div>
         </div>
       </div>
@@ -106,13 +106,13 @@ function NavItem({
       href={href}
       className={`group flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-all duration-150 ${
         isActive
-          ? "bg-[#28C5BE]/10 text-[#28C5BE]"
-          : "text-slate-400 hover:bg-white/[0.05] hover:text-slate-200"
+          ? "bg-white/[0.14] text-white"
+          : "text-violet-200/60 hover:bg-white/[0.07] hover:text-violet-100"
       }`}
     >
       <span className="flex items-center gap-2.5 min-w-0">
         {dot ? (
-          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isActive ? "bg-[#28C5BE]" : dot}`} />
+          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isActive ? "bg-white" : dot}`} />
         ) : icon ? (
           <span className="shrink-0">{icon}</span>
         ) : null}
@@ -120,7 +120,7 @@ function NavItem({
       </span>
       {badge !== undefined && (
         <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-md shrink-0 ml-1 ${
-          isActive ? "bg-[#28C5BE]/20 text-[#28C5BE]" : "bg-white/[0.06] text-slate-500"
+          isActive ? "bg-white/20 text-white" : "bg-white/[0.06] text-violet-300/60"
         }`}>
           {badge}
         </span>

@@ -540,6 +540,30 @@ export default function EmployeeTable({ employees }: EmployeeTableProps) {
   const showUtil = category === "trainer";
   const extraCols = (showNR || showUtil) ? 3 : 0;
 
+  const tableScrollRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft,  setCanScrollLeft]  = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  function syncScrollButtons() {
+    const el = tableScrollRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 0);
+    setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 1);
+  }
+
+  useEffect(() => {
+    const el = tableScrollRef.current;
+    if (!el) return;
+    syncScrollButtons();
+    el.addEventListener("scroll", syncScrollButtons);
+    window.addEventListener("resize", syncScrollButtons);
+    return () => {
+      el.removeEventListener("scroll", syncScrollButtons);
+      window.removeEventListener("resize", syncScrollButtons);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   function toggleFilter(key: FilterKey) {
     setActiveFilters(prev => {
       const next = new Set(prev);
@@ -617,7 +641,35 @@ export default function EmployeeTable({ employees }: EmployeeTableProps) {
       </div>
 
 
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-x-auto">
+      <div className="relative">
+        {/* Left scroll arrow */}
+        <button
+          onClick={() => tableScrollRef.current?.scrollBy({ left: -340, behavior: "smooth" })}
+          className={`absolute left-0 top-1/2 -translate-y-1/2 z-20 h-12 w-9 flex items-center justify-center bg-white border border-gray-200 rounded-r-xl shadow-md text-gray-500 hover:text-[#1E99C0] hover:bg-[#e6f7f5] transition-all duration-200 ${canScrollLeft ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}
+          aria-label="Scroll left"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+
+        {/* Right scroll arrow */}
+        <button
+          onClick={() => tableScrollRef.current?.scrollBy({ left: 340, behavior: "smooth" })}
+          className={`absolute right-0 top-1/2 -translate-y-1/2 z-20 h-12 w-9 flex items-center justify-center bg-white border border-gray-200 rounded-l-xl shadow-md text-gray-500 hover:text-[#1E99C0] hover:bg-[#e6f7f5] transition-all duration-200 ${canScrollRight ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}
+          aria-label="Scroll right"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+
+        {/* Left fade gradient */}
+        <div className={`absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-white to-transparent z-10 rounded-l-2xl pointer-events-none transition-opacity duration-200 ${canScrollLeft ? "opacity-100" : "opacity-0"}`} />
+        {/* Right fade gradient */}
+        <div className={`absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-white to-transparent z-10 rounded-r-2xl pointer-events-none transition-opacity duration-200 ${canScrollRight ? "opacity-100" : "opacity-0"}`} />
+
+      <div ref={tableScrollRef} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-x-auto scroll-smooth">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-gray-100">
@@ -712,6 +764,7 @@ export default function EmployeeTable({ employees }: EmployeeTableProps) {
           </tbody>
         </table>
       </div>
+      </div>{/* end relative scroll wrapper */}
 
       {selected && (
         <EmployeeModal

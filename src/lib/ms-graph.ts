@@ -47,7 +47,7 @@ export async function lookupUserEmail(displayName: string): Promise<string | nul
 
 export async function sendMail(to: string[], subject: string, htmlBody: string): Promise<void> {
   const token = await getGraphToken();
-  const fromEmail = process.env.MS_FROM_EMAIL!;
+  const fromEmail = (process.env.MS_FROM_EMAIL ?? "").trim();
 
   const res = await fetch(
     `https://graph.microsoft.com/v1.0/users/${encodeURIComponent(fromEmail)}/sendMail`,

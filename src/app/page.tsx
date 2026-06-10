@@ -52,12 +52,8 @@ export default async function OverviewPage({ searchParams }: PageProps) {
   const { overall, teamStats, tenure } = buildStats(employees);
 
   return (
-    <div className="flex-1 p-6 space-y-5">
-      <div className="flex items-start justify-between flex-wrap gap-4 mb-2">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-800">Overview</h2>
-          <p className="text-sm text-gray-500 mt-0.5">Aggregated view across all EI categories</p>
-        </div>
+    <div className="p-6 space-y-5">
+      <div className="flex items-center justify-end">
         <Suspense>
           <DateRangeFilter />
         </Suspense>

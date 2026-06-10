@@ -1,13 +1,13 @@
 export const dynamic = "force-dynamic";
 
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import Sidebar from "@/components/Sidebar";
+import TopBar from "@/components/TopBar";
 import { getEmployees } from "@/lib/data";
 
-const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
-const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export const metadata: Metadata = {
   title: "EI Dashboard — 90-Day Performance Tracker",
@@ -23,12 +23,15 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   };
 
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full`}>
-      <body className="h-full flex bg-[#e6f7f5] antialiased">
+    <html lang="en" className={`${inter.variable} h-full`}>
+      <body className="h-full flex bg-slate-50 antialiased font-[family-name:var(--font-inter)]">
         <Sidebar counts={counts} />
-        <main className="flex-1 overflow-y-auto">
-          {children}
-        </main>
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <TopBar />
+          <main className="flex-1 overflow-y-auto">
+            {children}
+          </main>
+        </div>
       </body>
     </html>
   );

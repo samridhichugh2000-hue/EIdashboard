@@ -36,20 +36,18 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
   });
 
   return (
-    <div className="flex-1 p-6 space-y-5">
-      <div className={`rounded-2xl bg-gradient-to-r ${CATEGORY_GRADIENTS[category]} px-6 py-5 shadow-md`}>
-        <div className="flex items-start justify-between flex-wrap gap-4">
+    <div className="p-6 space-y-4">
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="flex items-center gap-3">
+          <div className={`w-2 h-8 rounded-full bg-gradient-to-b ${CATEGORY_GRADIENTS[category]}`} />
           <div>
-            <h2 className="text-2xl font-bold text-white">{categoryLabel(category)}</h2>
-            <p className="text-sm text-white/70 mt-1">
-              {employees.length} employee{employees.length !== 1 ? "s" : ""} in Extended Interview
-              {(from || to) && <span className="ml-2 opacity-80">(filtered)</span>}
-            </p>
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest">{employees.length} employees</p>
+            {(from || to) && <p className="text-[10px] text-gray-400 mt-0.5">Date filtered</p>}
           </div>
-          <Suspense>
-            <DateRangeFilter />
-          </Suspense>
         </div>
+        <Suspense>
+          <DateRangeFilter />
+        </Suspense>
       </div>
       <EmployeeTable employees={employees} />
     </div>

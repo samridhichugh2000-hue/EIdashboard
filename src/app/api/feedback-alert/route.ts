@@ -13,7 +13,7 @@ interface AlertBody {
 
 function buildAlertHtml(body: AlertBody, managerFirstName: string): string {
   const milestoneRows = body.missingMilestones
-    .map(m => `<li style="margin-bottom:4px;">• <strong>${m} review</strong> — feedback not yet submitted</li>`)
+    .map(m => `<li style="margin-bottom:4px;">• <strong>${m.replace("-d", "-D")} Extended Interview</strong> — feedback not yet submitted</li>`)
     .join("");
 
   return `<!DOCTYPE html>

@@ -20,11 +20,12 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
 
   const { from, to } = await searchParams;
   const category = cat as EmployeeCategory;
-  const all = await getEmployees(category);
+  const all = await getEmployees();
 
   const employees = all.filter((e) => {
-    if (from && e.doj < from) return false;
-    if (to   && e.doj > to)   return false;
+    if (e.category !== category)    return false;
+    if (from && e.doj < from)       return false;
+    if (to   && e.doj > to)         return false;
     return true;
   });
 

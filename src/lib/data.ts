@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { getTursoClient, initSchema } from "@/lib/turso";
 import {
   fetchEmployeeListData,
@@ -28,7 +29,7 @@ async function ensureSchema() {
 // On cache miss: syncs employees → PIP/PA → feedback in parallel, then reads
 // everything back with JOINs so callers get fully-enriched Employee objects.
 // Category and final_status stored in Turso survive re-syncs (manual overrides).
-export async function getEmployees(category?: EmployeeCategory): Promise<Employee[]> {
+export const getEmployees = cache(async function getEmployees(category?: EmployeeCategory): Promise<Employee[]> {
   await ensureSchema();
   const db = getTursoClient();
   const now = Date.now();
@@ -59,7 +60,7 @@ export async function getEmployees(category?: EmployeeCategory): Promise<Employe
   }
 
   return readEmployees(db, category);
-}
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Sync helpers

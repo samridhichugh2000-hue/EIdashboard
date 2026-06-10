@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Employee, NREntry, PIPStatus, UtilizationEntry } from "@/types/employee";
 import { formatDate, getTenureBadgeClass, getStatusChipClass, getFeedbackQuality } from "@/lib/utils";
@@ -155,6 +155,76 @@ const FILTER_DEFS = [
 ];
 
 type FilterKey = typeof FILTER_DEFS[number]["key"];
+
+// ── feedback alert button ───────────────────────────────────────────────────
+
+function FeedbackAlertButton({ emp }: { emp: Employee }) {
+  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [errMsg, setErrMsg] = useState("");
+
+  const missing: string[] = [];
+  if (emp.tenureDays >= 30 && !emp.feedback.d30) missing.push("30-day");
+  if (emp.tenureDays >= 60 && !emp.feedback.d60) missing.push("60-day");
+  if (emp.tenureDays >= 90 && !emp.feedback.d90) missing.push("90-day");
+
+  const send = useCallback(async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setStatus("sending");
+    setErrMsg("");
+    try {
+      const res = await fetch("/api/feedback-alert", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          employeeId:        emp.employeeId,
+          employeeName:      emp.name,
+          managerName:       emp.reportingManager,
+          doj:               emp.doj,
+          tenureDays:        emp.tenureDays,
+          missingMilestones: missing,
+        }),
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error ?? "Failed to send");
+      setStatus("sent");
+      setTimeout(() => setStatus("idle"), 4000);
+    } catch (err) {
+      setErrMsg(err instanceof Error ? err.message : "Error");
+      setStatus("error");
+      setTimeout(() => setStatus("idle"), 4000);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [emp.employeeId, emp.name, emp.reportingManager, emp.doj, emp.tenureDays]);
+
+  if (status === "sent") {
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-green-50 text-green-700">
+        ✓ Alert sent
+      </span>
+    );
+  }
+
+  if (status === "error") {
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-red-50 text-red-600" title={errMsg}>
+        ✕ Failed
+      </span>
+    );
+  }
+
+  return (
+    <button
+      onClick={send}
+      disabled={status === "sending"}
+      className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-[#e6f7f5] text-[#1E99C0] border border-[#28C5BE]/30 hover:bg-[#1E99C0] hover:text-white transition-colors disabled:opacity-50"
+    >
+      <svg className="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+      </svg>
+      {status === "sending" ? "Sending…" : "Send alert"}
+    </button>
+  );
+}
 
 // "1 Apr 2026" or "30 Apr 2026" → Date (API returns D MMM YYYY)
 function parsePIPDate(dateStr: string): Date | null {
@@ -341,7 +411,10 @@ export default function EmployeeTable({ employees }: EmployeeTableProps) {
                     <IncidentBadge empCode={emp.employeeId.replace(/\D/g, "")} empName={emp.name} />
                   </td>
                   <td className="px-4 py-3">
-                    <FeedbackAlert tenureDays={emp.tenureDays} feedback={emp.feedback} />
+                    <div className="flex flex-col gap-1.5">
+                      <FeedbackAlert tenureDays={emp.tenureDays} feedback={emp.feedback} />
+                      {hasMissingFeedback(emp) && <FeedbackAlertButton emp={emp} />}
+                    </div>
                   </td>
                   {showNR && <>
                     <td className="px-4 py-3"><NRCell entry={emp.nrData[0]} /></td>

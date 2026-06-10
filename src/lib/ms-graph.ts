@@ -1,6 +1,6 @@
 let cachedToken: { value: string; expiresAt: number } | null = null;
 
-async function getGraphToken(): Promise<string> {
+export async function getGraphToken(): Promise<string> {
   const now = Date.now();
   if (cachedToken && cachedToken.expiresAt > now + 60_000) return cachedToken.value;
 
@@ -25,6 +25,21 @@ async function getGraphToken(): Promise<string> {
 
   cachedToken = { value: data.access_token, expiresAt: now + (data.expires_in ?? 3600) * 1000 };
   return cachedToken.value;
+}
+
+// Look up a user's email address by their display name via Microsoft Graph.
+// Tries exact match first; returns null if not found.
+export async function lookupUserEmail(displayName: string): Promise<string | null> {
+  const token = await getGraphToken();
+  const escaped = displayName.replace(/'/g, "''");
+  const res = await fetch(
+    `https://graph.microsoft.com/v1.0/users?$filter=displayName eq '${escaped}'&$select=mail,userPrincipalName&$top=1`,
+    { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" }
+  );
+  if (!res.ok) return null;
+  const data = await res.json();
+  const user = data.value?.[0];
+  return user?.mail ?? user?.userPrincipalName ?? null;
 }
 
 export async function sendMail(to: string[], subject: string, htmlBody: string): Promise<void> {

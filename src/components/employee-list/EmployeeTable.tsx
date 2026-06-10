@@ -212,17 +212,43 @@ function FeedbackAlertButton({ emp }: { emp: Employee }) {
     );
   }
 
+  function openPreview(e: React.MouseEvent) {
+    e.stopPropagation();
+    const params = new URLSearchParams({
+      employeeId:   emp.employeeId,
+      employeeName: emp.name,
+      managerName:  emp.reportingManager,
+      doj:          emp.doj,
+      tenureDays:   String(emp.tenureDays),
+      milestones:   missing.join(","),
+    });
+    window.open(`/api/feedback-alert?${params}`, "_blank");
+  }
+
   return (
-    <button
-      onClick={send}
-      disabled={status === "sending"}
-      className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-[#e6f7f5] text-[#1E99C0] border border-[#28C5BE]/30 hover:bg-[#1E99C0] hover:text-white transition-colors disabled:opacity-50"
-    >
-      <svg className="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-      </svg>
-      {status === "sending" ? "Sending…" : "Send alert"}
-    </button>
+    <div className="flex items-center gap-1">
+      <button
+        onClick={send}
+        disabled={status === "sending"}
+        className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-[#e6f7f5] text-[#1E99C0] border border-[#28C5BE]/30 hover:bg-[#1E99C0] hover:text-white transition-colors disabled:opacity-50"
+      >
+        <svg className="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+        </svg>
+        {status === "sending" ? "Sending…" : "Send alert"}
+      </button>
+      <button
+        onClick={openPreview}
+        title="Preview email draft"
+        className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-gray-50 text-gray-500 border border-gray-200 hover:bg-gray-100 transition-colors"
+      >
+        <svg className="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+        </svg>
+        Preview
+      </button>
+    </div>
   );
 }
 

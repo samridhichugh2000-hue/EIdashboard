@@ -75,6 +75,55 @@ function buildAlertHtml(body: AlertBody, managerFirstName: string): string {
 </html>`;
 }
 
+// GET /api/feedback-alert/preview?employeeId=&employeeName=&managerName=&doj=&tenureDays=&milestones=30-day,60-day
+// Returns the rendered email HTML so it can be previewed in a new tab.
+export async function GET(request: Request) {
+  const p = new URL(request.url).searchParams;
+  const body: AlertBody = {
+    employeeId:        p.get("employeeId")   ?? "",
+    employeeName:      p.get("employeeName") ?? "",
+    managerName:       p.get("managerName")  ?? "",
+    doj:               p.get("doj")          ?? "",
+    tenureDays:        parseInt(p.get("tenureDays") ?? "0"),
+    missingMilestones: (p.get("milestones") ?? "").split(",").filter(Boolean),
+  };
+  const managerFirstName = body.managerName.split(" ")[0] || "Manager";
+  const html = buildAlertHtml(body, managerFirstName);
+
+  // Wrap with a preview banner so it's clear this is a draft
+  const wrapped = html.replace(
+    "<body",
+    `<body`
+  ).replace(
+    `<div style="max-width:560px;`,
+    `<div style="max-width:560px;margin-top:0;`
+  ).replace(
+    "</body>",
+    `</body>`
+  );
+
+  const preview = `<!DOCTYPE html><html><head><meta charset="utf-8">
+<style>
+  body { margin: 0; font-family: Arial, sans-serif; background: #f3f4f6; }
+  .banner { background: #1f2937; color: #fff; text-align: center; padding: 10px 16px; font-size: 12px; }
+  .banner strong { color: #28C5BE; }
+  .meta { max-width: 560px; margin: 12px auto 0; background: #fff; border: 1px solid #e5e7eb; border-radius: 8px 8px 0 0; padding: 12px 20px; font-size: 12px; color: #6b7280; border-bottom: 2px dashed #e5e7eb; }
+  .meta span { color: #111827; font-weight: 600; }
+</style>
+</head>
+<body>
+  <div class="banner">📧 <strong>Email Preview</strong> — This is a draft. Nothing has been sent yet.</div>
+  <div class="meta">
+    <div><b>To:</b> <span>${body.managerName}</span> (manager — resolved from directory on send)</div>
+    <div style="margin-top:4px;"><b>From:</b> <span>EI Dashboard · HR &lt;${process.env.MS_FROM_EMAIL ?? "hr@koenig-solutions.com"}&gt;</span></div>
+    <div style="margin-top:4px;"><b>Subject:</b> <span>Feedback Reminder — ${body.employeeName} (${body.missingMilestones.join(", ")})</span></div>
+  </div>
+  ${wrapped.replace(/^<!DOCTYPE html>[\s\S]*?<body[^>]*>/, "").replace(/<\/body>[\s\S]*$/, "")}
+</body></html>`;
+
+  return new Response(preview, { headers: { "Content-Type": "text/html; charset=utf-8" } });
+}
+
 export async function POST(request: Request) {
   let body: AlertBody;
   try {

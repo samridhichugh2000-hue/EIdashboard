@@ -13,9 +13,9 @@ const STATUS_BARS = [
 ];
 
 const TEAM_META: Record<string, { dot: string; bg: string; border: string }> = {
-  sales:   { dot: "bg-teal-500",   bg: "bg-teal-50/60",   border: "border-teal-100"   },
-  trainer: { dot: "bg-violet-500", bg: "bg-violet-50/60", border: "border-violet-100" },
-  pt:      { dot: "bg-amber-500",  bg: "bg-amber-50/60",  border: "border-amber-100"  },
+  sales:   { dot: "bg-teal-600",   bg: "bg-teal-100",   border: "border-teal-200"   },
+  trainer: { dot: "bg-violet-600", bg: "bg-violet-100", border: "border-violet-200" },
+  pt:      { dot: "bg-amber-600",  bg: "bg-amber-100",  border: "border-amber-200"  },
 };
 
 export default function TeamSummaryCards({ teams }: TeamSummaryCardsProps) {

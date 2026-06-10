@@ -754,7 +754,7 @@ export default function EmployeeTable({ employees }: EmployeeTableProps) {
                   </>}
                   <td className="px-4 py-3 whitespace-nowrap">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusChipClass(emp.finalStatus)}`}>
-                      {emp.finalStatus}
+                      {emp.finalStatus === "Confirmed" ? "Closed" : emp.finalStatus}
                     </span>
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap">

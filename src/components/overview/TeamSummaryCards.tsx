@@ -6,7 +6,7 @@ import { TeamStats } from "@/types/employee";
 interface TeamSummaryCardsProps { teams: TeamStats[]; }
 
 const STATUS_BARS = [
-  { key: "confirmed"  as const, label: "Confirmed",   color: "bg-[#28C5BE]" },
+  { key: "confirmed"  as const, label: "Closed",      color: "bg-[#28C5BE]" },
   { key: "inProgress" as const, label: "In Progress", color: "bg-blue-400"  },
   { key: "paIssued"   as const, label: "PA Issued",   color: "bg-amber-400" },
   { key: "pipIssued"  as const, label: "PIP Issued",  color: "bg-red-400"   },

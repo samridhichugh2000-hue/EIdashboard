@@ -91,7 +91,7 @@ function incidentCell(incidents: RawIncidentRecord[]): string {
 function statusBadge(status: string): string {
   if (status === "PA Issued")  return badge(status, C.amber, "#fef3c7");
   if (status === "PIP Issued") return badge(status, C.red,   "#fee2e2");
-  if (status === "Confirmed")  return badge(status, C.green, "#dcfce7");
+  if (status === "Confirmed")  return badge("Closed", C.green, "#dcfce7");
   return badge(status, C.teal, C.tealBg);
 }
 

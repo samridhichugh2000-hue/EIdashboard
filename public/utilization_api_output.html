@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Trainer Utilization API - apikey 39</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f1f5f9;color:#1e293b}
+header{background:linear-gradient(135deg,#F59E0B,#D97706);color:#fff;padding:22px 30px}
+header h1{font-size:20px;font-weight:700}
+header p{font-size:12px;opacity:.7;margin-top:4px}
+.stats{display:flex;gap:12px;padding:18px 30px;flex-wrap:wrap}
+.stat{background:#fff;border-radius:12px;padding:14px 18px;box-shadow:0 1px 3px rgba(0,0,0,.08);min-width:130px}
+.stat .n{font-size:26px;font-weight:800}
+.stat .l{font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin-top:2px}
+.s-total .n{color:#D97706}.s-emp .n{color:#1E99C0}.s-mgr .n{color:#7c3aed}
+.s-g .n{color:#16a34a}.s-a .n{color:#d97706}.s-r .n{color:#ef4444}
+.legend{display:flex;gap:14px;padding:0 30px 10px;flex-wrap:wrap;align-items:center;font-size:12px}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.dot{width:10px;height:10px;border-radius:3px;display:inline-block}
+.dot-g{background:#bbf7d0}.dot-a{background:#fde68a}.dot-r{background:#fecaca}
+.bar{padding:0 30px 14px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.bar input{padding:7px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;width:250px;outline:none}
+.bar input:focus{border-color:#F59E0B}
+.bar select{padding:7px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;background:#fff;outline:none}
+.bar span{font-size:13px;color:#64748b}.bar b{color:#D97706}
+.wrap{padding:0 30px 40px;overflow-x:auto}
+table{border-collapse:collapse;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08);font-size:13px}
+thead tr{background:#f8fafc}
+th{padding:11px 12px;text-align:left;font-size:10px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid #e2e8f0;white-space:nowrap}
+td{padding:9px 12px;border-bottom:1px solid #f1f5f9;vertical-align:middle;white-space:nowrap}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#fefce8}
+.mono{font-family:monospace;font-size:12px}.gray{color:#94a3b8}
+.bold{font-weight:600}.mgr{color:#475569;font-size:12px;max-width:180px;overflow:hidden;text-overflow:ellipsis}
+.upct{text-align:right;font-family:monospace;font-size:12px;font-weight:600;border-radius:6px;padding:4px 10px}
+.bg-green{background:#dcfce7;color:#166534}
+.bg-amber{background:#fef3c7;color:#92400e}
+.bg-red{background:#fee2e2;color:#dc2626}
+.na{color:#cbd5e1;text-align:center}
+</style>
+</head>
+<body>
+<header>
+  <h1>Trainer Utilization API Output</h1>
+  <p>apikey=39 &nbsp;&middot;&nbsp; Per-employee fetch &nbsp;&middot;&nbsp; 696 rows across 232 employees</p>
+</header>
+<div class="stats">
+  <div class="stat s-total"><div class="n">696</div><div class="l">Total Rows</div></div>
+  <div class="stat s-emp"><div class="n">232</div><div class="l">Employees</div></div>
+  <div class="stat s-mgr"><div class="n">57</div><div class="l">Managers</div></div>
+  <div class="stat s-g"><div class="n">78</div><div class="l">Good (&ge;70%)</div></div>
+  <div class="stat s-a"><div class="n">221</div><div class="l">Mid (40-69%)</div></div>
+  <div class="stat s-r"><div class="n">397</div><div class="l">Low (&lt;40%)</div></div>
+</div>
+<div class="legend">
+  <span><span class="dot dot-g"></span> Good (&ge;70%)</span>
+  <span><span class="dot dot-a"></span> Mid (40–69%)</span>
+  <span><span class="dot dot-r"></span> Low (&lt;40%)</span>
+</div>
+<div class="bar">
+  <input id="q" placeholder="Search name, emp code, manager..." oninput="ft()">
+  <select id="mf" onchange="ft()">
+    <option value="">All Levels</option>
+    <option value="good">Good (&ge;70%)</option>
+    <option value="mid">Mid (40–69%)</option>
+    <option value="low">Low (&lt;40%)</option>
+  </select>
+  <span>Showing <b id="cnt">232</b> of 232 employees</span>
+</div>
+<div class="wrap">
+<table id="t">
+<thead><tr>
+  <th>#</th><th>Emp Code</th><th>Name</th><th>Reporting Manager</th>
+  <th>Feb 2026</th><th>Mar 2026</th><th>Apr 2026</th>
+</tr></thead>
+<tbody>
+<tr><td class="mono gray">1</td><td class="mono">3962</td><td class="bold">Aadil Ashraf Lone</td><td class="mgr">Dinesh Ghanshyam Tiwari (2645)</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">0.6%</td><td class="upct bg-red">0.6%</td></tr>
+<tr><td class="mono gray">2</td><td class="mono">3681</td><td class="bold">Aastha  Mehta</td><td class="mgr">Deepti  Shastri (3318)</td><td class="upct bg-green">74.3%</td><td class="upct bg-amber">49.0%</td><td class="upct bg-amber">51.8%</td></tr>
+<tr><td class="mono gray">3</td><td class="mono">2925</td><td class="bold">Aayushi  Maheshwari</td><td class="mgr">Micky  Mowar (1957)</td><td class="upct bg-red">30.0%</td><td class="upct bg-red">23.3%</td><td class="upct bg-red">36.4%</td></tr>
+<tr><td class="mono gray">4</td><td class="mono">3823</td><td class="bold">Abdelrahman Samaha Rashed</td><td class="mgr">Vibhor Raju Sharma (2348)</td><td class="upct bg-red">22.5%</td><td class="upct bg-red">18.1%</td><td class="upct bg-red">19.3%</td></tr>
+<tr><td class="mono gray">5</td><td class="mono">3990</td><td class="bold">Abdulla Alsaied Khalil Mahmoud</td><td class="mgr">Deepti  Shastri (3318)</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">0.0%</td></tr>
+<tr><td class="mono gray">6</td><td class="mono">3815</td><td class="bold">Abhinav  Samant</td><td class="mgr">Aishwar  Nigam (3227)</td><td class="upct bg-red">25.0%</td><td class="upct bg-red">5.7%</td><td class="upct bg-red">22.7%</td></tr>
+<tr><td class="mono gray">7</td><td class="mono">3992</td><td class="bold">Abhishek  Mishra</td><td class="mgr">Sachin  Chauhan (307)</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">0.0%</td></tr>
+<tr><td class="mono gray">8</td><td class="mono">3497</td><td class="bold">Abhishek Singh  Thakur</td><td class="mgr">Saroj Mala  (2125)</td><td class="upct bg-red">4.4%</td><td class="upct bg-amber">45.5%</td><td class="upct bg-amber">63.6%</td></tr>
+<tr><td class="mono gray">9</td><td class="mono">3420</td><td class="bold">Abhishek Tripathy</td><td class="mgr">Akash  Mehndiratta (3775)</td><td class="upct bg-red">23.8%</td><td class="upct bg-amber">55.7%</td><td class="upct bg-red">37.5%</td></tr>
+<tr><td class="mono gray">10</td><td class="mono">3989</td><td class="bold">Abreham Kassahun Abebe</td><td class="mgr">Anirudh  Sharma (2934)</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">0.0%</td></tr>
+<tr><td class="mono gray">11</td><td class="mono">3864</td><td class="bold">Adham  Elmahallawi</td><td class="mgr">Arshad  Kamal (3494)</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">0.0%</td></tr>
+<tr><td class="mono gray">12</td><td class="mono">3766</td><td class="bold">Aditi  Mishra</td><td class="mgr">Vibhor Raju Sharma (2348)</td><td class="upct bg-green">100.1%</td><td class="upct bg-green">86.0%</td><td class="upct bg-red">2.3%</td></tr>
+<tr><td class="mono gray">13</td><td class="mono">3770</td><td class="bold">Aditya  Pathak</td><td class="mgr">Saurabh  Chauhan (1942)</td><td class="upct bg-red">25.0%</td><td class="upct bg-red">22.7%</td><td class="upct bg-red">0.0%</td></tr>
+<tr><td class="mono gray">14</td><td class="mono">3927</td><td class="bold">Ahmed Amr Zidan</td><td class="mgr">Sandeep  Singh (1247)</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">25.6%</td><td class="upct bg-red">2.3%</td></tr>
+<tr><td class="mono gray">15</td><td class="mono">3227</td><td class="bold">Aishwar  Nigam</td><td class="mgr">Gaurav Kumar Joshi (1227)</td><td class="upct bg-amber">45.0%</td><td class="upct bg-amber">47.2%</td><td class="upct bg-green">71.6%</td></tr>
+<tr><td class="mono gray">16</td><td class="mono">2841</td><td class="bold">Aishwarya  Rajput</td><td class="mgr">Saroj Mala  (2125)</td><td class="upct bg-red">6.2%</td><td class="upct bg-red">27.3%</td><td class="upct bg-red">2.3%</td></tr>
+<tr><td class="mono gray">17</td><td class="mono">3775</td><td class="bold">Akash  Mehndiratta</td><td class="mgr">Rohit  Aggarwal (1)</td><td class="upct bg-amber">43.1%</td><td class="upct bg-red">2.8%</td><td class="upct bg-red">1.7%</td></tr>
+<tr><td class="mono gray">18</td><td class="mono">3935</td><td class="bold">Akash  Rai</td><td class="mgr">Dinesh Ghanshyam Tiwari (2645)</td><td class="upct bg-red">0.6%</td><td class="upct bg-green">70.5%</td><td class="upct bg-red">1.7%</td></tr>
+<tr><td class="mono gray">19</td><td class="mono">3452</td><td class="bold">Akshat  Parashar</td><td class="mgr">Hardik  Tike (2400)</td><td class="upct bg-green">185.6%</td><td class="upct bg-red">31.2%</td><td class="upct bg-amber">60.2%</td></tr>
+<tr><td class="mono gray">20</td><td class="mono">2388</td><td class="bold">Akwinder  Kaur</td><td class="mgr">Vatan Vijaykumar Joshi (1368)</td><td class="upct bg-green">100.5%</td><td class="upct bg-green">75.6%</td><td class="upct bg-green">72.2%</td></tr>
+<tr><td class="mono gray">21</td><td class="mono">3903</td><td class="bold">Alexander  Arul Doss</td><td class="mgr">Kannan  S (3180)</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">0.0%</td></tr>
+<tr><td class="mono gray">22</td><td class="mono">3567</td><td class="bold">Alok  Raj</td><td class="mgr">Vatan Vijaykumar Joshi (1368)</td><td class="upct bg-amber">48.8%</td><td class="upct bg-amber">59.1%</td><td class="upct bg-red">34.1%</td></tr>
+<tr><td class="mono gray">23</td><td class="mono">3912</td><td class="bold">Alotaibi Fahad Abdullah</td><td class="mgr">Praveen  Kumar (4)</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">0.0%</td></tr>
+<tr><td class="mono gray">24</td><td class="mono">3161</td><td class="bold">Aman  Rajput</td><td class="mgr">Sandeep  Singh (1247)</td><td class="upct bg-red">26.9%</td><td class="upct bg-amber">63.6%</td><td class="upct bg-red">5.1%</td></tr>
+<tr><td class="mono gray">25</td><td class="mono">2565</td><td class="bold">Amar Nath Mishra</td><td class="mgr">Sandeep  Singh (1247)</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">0.0%</td><td class="upct bg-amber">45.5%</td></tr>
+<tr><td class="mono gray">26</td><td class="mono">3957</td><td class="bold">Ambica  Ghai</td><td class="mgr">Krishna Ramlolarakh Dwivedi (3315)</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">0.0%</td></tr>
+<tr><td class="mono gray">27</td><td class="mono">3176</td><td class="bold">Amit  Kumar</td><td class="mgr">Sandeep  Singh (1247)</td><td class="upct bg-amber">41.2%</td><td class="upct bg-amber">45.5%</td><td class="upct bg-amber">40.9%</td></tr>
+<tr><td class="mono gray">28</td><td class="mono">3577</td><td class="bold">Amit Kumar Mishra</td><td class="mgr">Vatan Vijaykumar Joshi (1368)</td><td class="upct bg-green">70.6%</td><td class="upct bg-green">81.8%</td><td class="upct bg-amber">45.5%</td></tr>
+<tr><td class="mono gray">29</td><td class="mono">3980</td><td class="bold">Amos Oluwatimilehin Agbetile</td><td class="mgr">Prabhat  Singh (2116)</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">2.8%</td></tr>
+<tr><td class="mono gray">30</td><td class="mono">3804</td><td class="bold">Angel Mary  Alex</td><td class="mgr">Vivek M Menon (3460)</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">6.8%</td><td class="upct bg-red">0.0%</td></tr>
+<tr><td class="mono gray">31</td><td class="mono">2934</td><td class="bold">Anirudh  Sharma</td><td class="mgr">Micky  Mowar (1957)</td><td class="upct bg-amber">52.5%</td><td class="upct bg-amber">51.7%</td><td class="upct bg-amber">69.0%</td></tr>
+<tr><td class="mono gray">32</td><td class="mono">2752</td><td class="bold">Anish  Samy</td><td class="mgr">Vatan Vijaykumar Joshi (1368)</td><td class="upct bg-amber">65.0%</td><td class="upct bg-green">75.0%</td><td class="upct bg-amber">60.2%</td></tr>
+<tr><td class="mono gray">33</td><td class="mono">3727</td><td class="bold">Ankit Singh  Gusain</td><td class="mgr">Akwinder  Kaur (2388)</td><td class="upct bg-red">18.8%</td><td class="upct bg-red">18.2%</td><td class="upct bg-red">27.3%</td></tr>
+<tr><td class="mono gray">34</td><td class="mono">3191</td><td class="bold">Anshu Jayant Batra</td><td class="mgr">Damini Sabharwal  (2309)</td><td class="upct bg-amber">64.3%</td><td class="upct bg-amber">40.2%</td><td class="upct bg-amber">40.9%</td></tr>
+<tr><td class="mono gray">35</td><td class="mono">3650</td><td class="bold">Archita  Singh</td><td class="mgr">Krishna Ramlolarakh Dwivedi (3315)</td><td class="upct bg-amber">41.0%</td><td class="upct bg-amber">56.7%</td><td class="upct bg-green">79.4%</td></tr>
+<tr><td class="mono gray">36</td><td class="mono">3494</td><td class="bold">Arshad  Kamal</td><td class="mgr">Micky  Mowar (1957)</td><td class="upct bg-amber">56.2%</td><td class="upct bg-amber">54.0%</td><td class="upct bg-red">22.7%</td></tr>
+<tr><td class="mono gray">37</td><td class="mono">3293</td><td class="bold">Arun Kumar Jangid</td><td class="mgr">Ashwin Sam Koshy (1545)</td><td class="upct bg-red">28.1%</td><td class="upct bg-red">16.2%</td><td class="upct bg-red">17.2%</td></tr>
+<tr><td class="mono gray">38</td><td class="mono">3972</td><td class="bold">Aryaman Kumar Singh</td><td class="mgr">Tanya  Jaiswal (3685)</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">0.0%</td></tr>
+<tr><td class="mono gray">39</td><td class="mono">3861</td><td class="bold">Ashish  Mehra</td><td class="mgr">Prashant  Ranjan (1231)</td><td class="upct bg-red">20.0%</td><td class="upct bg-green">72.6%</td><td class="upct bg-red">0.0%</td></tr>
+<tr><td class="mono gray">40</td><td class="mono">3986</td><td class="bold">Ashish  Thakuri</td><td class="mgr">Ankit Kumar Malik (2178)</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">0.0%</td></tr>
+<tr><td class="mono gray">41</td><td class="mono">1545</td><td class="bold">Ashwin Sam Koshy</td><td class="mgr">Rohit  Aggarwal (1)</td><td class="upct bg-red">1.2%</td><td class="upct bg-red">0.6%</td><td class="upct bg-red">0.0%</td></tr>
+<tr><td class="mono gray">42</td><td class="mono">3741</td><td class="bold">Augustine Gideon  Ubong</td><td class="mgr">Akwinder  Kaur (2388)</td><td class="upct bg-red">1.2%</td><td class="upct bg-amber">48.8%</td><td class="upct bg-red">16.7%</td></tr>
+<tr><td class="mono gray">43</td><td class="mono">2699</td><td class="bold">Avni  Sharma</td><td class="mgr">Abhishek  Soni (1689)</td><td class="upct bg-amber">45.0%</td><td class="upct bg-amber">43.1%</td><td class="upct bg-red">30.7%</td></tr>
+<tr><td class="mono gray">44</td><td class="mono">3762</td><td class="bold">Babajan  Tamboli</td><td class="mgr">Rashmi Amol Dhumal (3929)</td><td class="upct bg-red">2.5%</td><td class="upct bg-amber">59.1%</td><td class="upct bg-amber">62.5%</td></tr>
+<tr><td class="mono gray">45</td><td class="mono">3918</td><td class="bold">Bharat Singh Thakur</td><td class="mgr">Sandeep  Joshi (3217)</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">0.0%</td></tr>
+<tr><td class="mono gray">46</td><td class="mono">1920</td><td class="bold">Bhaskar Kumar Dixit</td><td class="mgr">Vatan Vijaykumar Joshi (1368)</td><td class="upct bg-amber">66.2%</td><td class="upct bg-amber">45.5%</td><td class="upct bg-green">90.9%</td></tr>
+<tr><td class="mono gray">47</td><td class="mono">2380</td><td class="bold">Bhavesh Vijay Pali</td><td class="mgr">Abhishek  Soni (1689)</td><td class="upct bg-amber">46.9%</td><td class="upct bg-red">14.8%</td><td class="upct bg-red">9.1%</td></tr>
+<tr><td class="mono gray">48</td><td class="mono">3505</td><td class="bold">Bhavna  Singh</td><td class="mgr">Ashwin Sam Koshy (1545)</td><td class="upct bg-amber">43.1%</td><td class="upct bg-red">39.8%</td><td class="upct bg-red">0.0%</td></tr>
+<tr><td class="mono gray">49</td><td class="mono">3557</td><td class="bold">Chinechetam Joachim  Okafor</td><td class="mgr">Vatan Vijaykumar Joshi (1368)</td><td class="upct bg-red">11.2%</td><td class="upct bg-red">15.0%</td><td class="upct bg-amber">61.1%</td></tr>
+<tr><td class="mono gray">50</td><td class="mono">3472</td><td class="bold">Dakshi Lal  Srivastava</td><td class="mgr">Saroj Mala  (2125)</td><td class="upct bg-amber">66.2%</td><td class="upct bg-amber">57.4%</td><td class="upct bg-red">36.4%</td></tr>
+<tr><td class="mono gray">51</td><td class="mono">2309</td><td class="bold">Damini Sabharwal</td><td class="mgr">Rohit  Aggarwal (1)</td><td class="upct bg-red">22.5%</td><td class="upct bg-red">9.7%</td><td class="upct bg-red">15.3%</td></tr>
+<tr><td class="mono gray">52</td><td class="mono">2652</td><td class="bold">Deepanshu  Kumar</td><td class="mgr">Abhishek  Soni (1689)</td><td class="upct bg-green">98.7%</td><td class="upct bg-green">104.0%</td><td class="upct bg-amber">40.9%</td></tr>
+<tr><td class="mono gray">53</td><td class="mono">3318</td><td class="bold">Deepti  Shastri</td><td class="mgr">Saroj Mala  (2125)</td><td class="upct bg-green">106.4%</td><td class="upct bg-amber">45.5%</td><td class="upct bg-green">90.9%</td></tr>
+<tr><td class="mono gray">54</td><td class="mono">3320</td><td class="bold">Deepu  Thomas</td><td class="mgr">Micky  Mowar (1957)</td><td class="upct bg-red">28.1%</td><td class="upct bg-red">23.9%</td><td class="upct bg-red">22.7%</td></tr>
+<tr><td class="mono gray">55</td><td class="mono">229</td><td class="bold">Digvijay  Prasad</td><td class="mgr">Sandeep  Singh (1247)</td><td class="upct bg-red">25.0%</td><td class="upct bg-amber">46.6%</td><td class="upct bg-red">31.8%</td></tr>
+<tr><td class="mono gray">56</td><td class="mono">2645</td><td class="bold">Dinesh Ghanshyam Tiwari</td><td class="mgr">Vibhor Raju Sharma (2348)</td><td class="upct bg-green">96.2%</td><td class="upct bg-green">80.1%</td><td class="upct bg-red">21.6%</td></tr>
+<tr><td class="mono gray">57</td><td class="mono">3924</td><td class="bold">Divya  Rani</td><td class="mgr">Raushan  Ranjan (2704)</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">18.2%</td><td class="upct bg-red">29.6%</td></tr>
+<tr><td class="mono gray">58</td><td class="mono">3543</td><td class="bold">Drashtiben  Devmurari</td><td class="mgr">Abhishek  Soni (1689)</td><td class="upct bg-red">8.8%</td><td class="upct bg-amber">51.1%</td><td class="upct bg-red">10.2%</td></tr>
+<tr><td class="mono gray">59</td><td class="mono">3595</td><td class="bold">Elvis Kobby Bessah</td><td class="mgr">Karishma  Talreja (2298)</td><td class="upct bg-red">37.7%</td><td class="upct bg-red">16.0%</td><td class="upct bg-green">90.7%</td></tr>
+<tr><td class="mono gray">60</td><td class="mono">2586</td><td class="bold">Farha Abdul Razzak Shaikh</td><td class="mgr">Vatan Vijaykumar Joshi (1368)</td><td class="upct bg-green">80.0%</td><td class="upct bg-amber">69.3%</td><td class="upct bg-amber">69.3%</td></tr>
+<tr><td class="mono gray">61</td><td class="mono">3882</td><td class="bold">Farhan  Mohd</td><td class="mgr">Hardik  Tike (2400)</td><td class="upct bg-green">72.5%</td><td class="upct bg-amber">42.0%</td><td class="upct bg-green">101.7%</td></tr>
+<tr><td class="mono gray">62</td><td class="mono">3905</td><td class="bold">Gaurav  Chaudhary</td><td class="mgr">Rashi  Oberoi (2847)</td><td class="upct bg-red">2.5%</td><td class="upct bg-amber">59.9%</td><td class="upct bg-amber">43.8%</td></tr>
+<tr><td class="mono gray">63</td><td class="mono">3642</td><td class="bold">Geetansh  Goyal</td><td class="mgr">Anirudh  Sharma (2934)</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">0.0%</td></tr>
+<tr><td class="mono gray">64</td><td class="mono">2419</td><td class="bold">Gurjot Singh Sodhi</td><td class="mgr">Vatan Vijaykumar Joshi (1368)</td><td class="upct bg-red">28.8%</td><td class="upct bg-amber">62.5%</td><td class="upct bg-amber">46.6%</td></tr>
+<tr><td class="mono gray">65</td><td class="mono">3901</td><td class="bold">Harmandeep  Kaur</td><td class="mgr">Gaurav Kumar Joshi (1227)</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">18.2%</td><td class="upct bg-red">0.0%</td></tr>
+<tr><td class="mono gray">66</td><td class="mono">3968</td><td class="bold">Harsh  Bhatnagar</td><td class="mgr">Karishma  Talreja (2298)</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">0.0%</td></tr>
+<tr><td class="mono gray">67</td><td class="mono">2569</td><td class="bold">Harshita  Maurya</td><td class="mgr">Micky  Mowar (1957)</td><td class="upct bg-red">30.0%</td><td class="upct bg-green">71.6%</td><td class="upct bg-amber">43.2%</td></tr>
+<tr><td class="mono gray">68</td><td class="mono">3644</td><td class="bold">Idrees  Ali</td><td class="mgr">Abhishek  Soni (1689)</td><td class="upct bg-amber">61.4%</td><td class="upct bg-red">23.0%</td><td class="upct bg-red">20.1%</td></tr>
+<tr><td class="mono gray">69</td><td class="mono">3763</td><td class="bold">Ifrah  Juikar</td><td class="mgr">Abhishek  Soni (1689)</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">1.1%</td><td class="upct bg-red">0.0%</td></tr>
+<tr><td class="mono gray">70</td><td class="mono">3210</td><td class="bold">Imran Ali Mr</td><td class="mgr">Karishma  Talreja (2298)</td><td class="upct bg-amber">45.3%</td><td class="upct bg-amber">61.4%</td><td class="upct bg-red">38.1%</td></tr>
+<tr><td class="mono gray">71</td><td class="mono">3862</td><td class="bold">Jai  Chitkara</td><td class="mgr">Vatan Vijaykumar Joshi (1368)</td><td class="upct bg-amber">40.0%</td><td class="upct bg-red">25.0%</td><td class="upct bg-red">20.4%</td></tr>
+<tr><td class="mono gray">72</td><td class="mono">3971</td><td class="bold">Jaya Srilakshmi Sodisetty</td><td class="mgr">Tanya  Jaiswal (3685)</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">0.0%</td></tr>
+<tr><td class="mono gray">73</td><td class="mono">3773</td><td class="bold">Jayesh  Rohilla</td><td class="mgr">Kanav  Jain (2540)</td><td class="upct bg-red">1.2%</td><td class="upct bg-red">1.1%</td><td class="upct bg-red">1.1%</td></tr>
+<tr><td class="mono gray">74</td><td class="mono">2337</td><td class="bold">Joel Isaac  Ananda Raj</td><td class="mgr">Vatan Vijaykumar Joshi (1368)</td><td class="upct bg-amber">62.5%</td><td class="upct bg-amber">61.9%</td><td class="upct bg-green">79.5%</td></tr>
+<tr><td class="mono gray">75</td><td class="mono">3677</td><td class="bold">Justice  Boateng</td><td class="mgr">Karishma  Talreja (2298)</td><td class="upct bg-red">8.4%</td><td class="upct bg-red">12.5%</td><td class="upct bg-red">25.0%</td></tr>
+<tr><td class="mono gray">76</td><td class="mono">2451</td><td class="bold">Jyoti  Kumari</td><td class="mgr">Sandeep  Singh (1247)</td><td class="upct bg-green">73.1%</td><td class="upct bg-amber">46.6%</td><td class="upct bg-red">27.3%</td></tr>
+<tr><td class="mono gray">77</td><td class="mono">2992</td><td class="bold">Kanagavalli  Joseph Manns</td><td class="mgr">Micky  Mowar (1957)</td><td class="upct bg-amber">66.9%</td><td class="upct bg-amber">50.0%</td><td class="upct bg-red">6.5%</td></tr>
+<tr><td class="mono gray">78</td><td class="mono">3523</td><td class="bold">Kanchan  Sundarani</td><td class="mgr">Ashwin Sam Koshy (1545)</td><td class="upct bg-red">17.5%</td><td class="upct bg-red">22.7%</td><td class="upct bg-red">0.0%</td></tr>
+<tr><td class="mono gray">79</td><td class="mono">3180</td><td class="bold">Kannan  S</td><td class="mgr">Vatan Vijaykumar Joshi (1368)</td><td class="upct bg-amber">63.8%</td><td class="upct bg-amber">48.9%</td><td class="upct bg-amber">55.1%</td></tr>
+<tr><td class="mono gray">80</td><td class="mono">2849</td><td class="bold">Kaveri  Kaur</td><td class="mgr">Micky  Mowar (1957)</td><td class="upct bg-amber">67.5%</td><td class="upct bg-amber">42.0%</td><td class="upct bg-green">84.1%</td></tr>
+<tr><td class="mono gray">81</td><td class="mono">3714</td><td class="bold">Kavitha  Varthya</td><td class="mgr">Karishma  Talreja (2298)</td><td class="upct bg-red">8.8%</td><td class="upct bg-red">26.6%</td><td class="upct bg-red">0.0%</td></tr>
+<tr><td class="mono gray">82</td><td class="mono">3747</td><td class="bold">Kowsik  Ruttala</td><td class="mgr">Dinesh Ghanshyam Tiwari (2645)</td><td class="upct bg-green">77.4%</td><td class="upct bg-amber">66.1%</td><td class="upct bg-amber">61.4%</td></tr>
+<tr><td class="mono gray">83</td><td class="mono">3315</td><td class="bold">Krishna Ramlolarakh Dwivedi</td><td class="mgr">Damini Sabharwal  (2309)</td><td class="upct bg-green">116.9%</td><td class="upct bg-green">71.0%</td><td class="upct bg-green">80.2%</td></tr>
+<tr><td class="mono gray">84</td><td class="mono">3909</td><td class="bold">Krishnendu  Dinesh</td><td class="mgr">Sushma  Sharma (2503)</td><td class="upct bg-red">15.0%</td><td class="upct bg-amber">48.0%</td><td class="upct bg-red">22.7%</td></tr>
+<tr><td class="mono gray">85</td><td class="mono">3493</td><td class="bold">Krupali Subhash  Burute</td><td class="mgr">Saroj Mala  (2125)</td><td class="upct bg-red">35.0%</td><td class="upct bg-red">24.4%</td><td class="upct bg-red">34.1%</td></tr>
+<tr><td class="mono gray">86</td><td class="mono">2707</td><td class="bold">Kshitiz Raghuvanshi  Kshitiz Raghuvanshi</td><td class="mgr">Ashwin Sam Koshy (1545)</td><td class="upct bg-red">33.8%</td><td class="upct bg-amber">55.7%</td><td class="upct bg-amber">40.9%</td></tr>
+<tr><td class="mono gray">87</td><td class="mono">2203</td><td class="bold">Kuldeep  Singh</td><td class="mgr">Damini Sabharwal  (2309)</td><td class="upct bg-amber">55.6%</td><td class="upct bg-green">79.8%</td><td class="upct bg-amber">45.5%</td></tr>
+<tr><td class="mono gray">88</td><td class="mono">3519</td><td class="bold">Lipika  Sharma</td><td class="mgr">Damini Sabharwal  (2309)</td><td class="upct bg-amber">42.5%</td><td class="upct bg-red">28.4%</td><td class="upct bg-red">36.4%</td></tr>
+<tr><td class="mono gray">89</td><td class="mono">2449</td><td class="bold">Madhur  Patidar</td><td class="mgr">Micky  Mowar (1957)</td><td class="upct bg-red">22.5%</td><td class="upct bg-green">73.9%</td><td class="upct bg-amber">52.3%</td></tr>
+<tr><td class="mono gray">90</td><td class="mono">3812</td><td class="bold">Maged Mohamed Abd</td><td class="mgr">Sachin  Chauhan (307)</td><td class="upct bg-red">20.0%</td><td class="upct bg-red">20.0%</td><td class="upct bg-red">0.0%</td></tr>
+<tr><td class="mono gray">91</td><td class="mono">3640</td><td class="bold">Magesh Kumar  Palani</td><td class="mgr">Vatan Vijaykumar Joshi (1368)</td><td class="upct bg-red">25.6%</td><td class="upct bg-amber">43.2%</td><td class="upct bg-red">23.9%</td></tr>
+<tr><td class="mono gray">92</td><td class="mono">3537</td><td class="bold">Manjiri Abhijit  Tilak</td><td class="mgr">Sandeep  Singh (1247)</td><td class="upct bg-amber">47.5%</td><td class="upct bg-red">1.1%</td><td class="upct bg-red">18.2%</td></tr>
+<tr><td class="mono gray">93</td><td class="mono">3738</td><td class="bold">Martina Wagih Adly  Boules</td><td class="mgr">Subhendu  Mukherjee (2128)</td><td class="upct bg-red">13.8%</td><td class="upct bg-red">20.2%</td><td class="upct bg-amber">59.1%</td></tr>
+<tr><td class="mono gray">94</td><td class="mono">3678</td><td class="bold">Marwan Mohammed Mokhtar Mohamed  Metwally</td><td class="mgr">Sushma  Sharma (2503)</td><td class="upct bg-red">26.2%</td><td class="upct bg-red">16.2%</td><td class="upct bg-amber">42.0%</td></tr>
+<tr><td class="mono gray">95</td><td class="mono">2441</td><td class="bold">Mayur Bhushan Kotoky</td><td class="mgr">Vibhor Raju Sharma (2348)</td><td class="upct bg-green">86.9%</td><td class="upct bg-amber">62.5%</td><td class="upct bg-amber">60.2%</td></tr>
+<tr><td class="mono gray">96</td><td class="mono">3485</td><td class="bold">Mohd  Hasib</td><td class="mgr">Prashant  Ranjan (1231)</td><td class="upct bg-green">95.0%</td><td class="upct bg-red">20.4%</td><td class="upct bg-amber">45.5%</td></tr>
+<tr><td class="mono gray">97</td><td class="mono">3926</td><td class="bold">Mohit  Kumar</td><td class="mgr">Rahul Babarao Khadase (2480)</td><td class="upct bg-red">5.0%</td><td class="upct bg-red">10.2%</td><td class="upct bg-red">15.3%</td></tr>
+<tr><td class="mono gray">98</td><td class="mono">3983</td><td class="bold">Mohith  Koniki</td><td class="mgr">Sania  Mutreja (2896)</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">0.0%</td></tr>
+<tr><td class="mono gray">99</td><td class="mono">2709</td><td class="bold">Monika  Ahlawat</td><td class="mgr">Micky  Mowar (1957)</td><td class="upct bg-red">11.2%</td><td class="upct bg-red">34.1%</td><td class="upct bg-amber">60.2%</td></tr>
+<tr><td class="mono gray">100</td><td class="mono">2585</td><td class="bold">Muddasir  Mahadik</td><td class="mgr">Abhishek  Soni (1689)</td><td class="upct bg-amber">40.7%</td><td class="upct bg-red">23.9%</td><td class="upct bg-red">32.4%</td></tr>
+<tr><td class="mono gray">101</td><td class="mono">3899</td><td class="bold">Muddasir Sikander  Jaghde</td><td class="mgr">Kanagavalli  Joseph Manns (2992)</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">0.0%</td></tr>
+<tr><td class="mono gray">102</td><td class="mono">3842</td><td class="bold">Naresh Daulatram Chhaproo</td><td class="mgr">Sachin  Chauhan (307)</td><td class="upct bg-red">32.9%</td><td class="upct bg-red">33.1%</td><td class="upct bg-red">20.8%</td></tr>
+<tr><td class="mono gray">103</td><td class="mono">3742</td><td class="bold">Neda  Mohammed</td><td class="mgr">Sushma  Sharma (2503)</td><td class="upct bg-amber">50.6%</td><td class="upct bg-red">37.5%</td><td class="upct bg-amber">48.9%</td></tr>
+<tr><td class="mono gray">104</td><td class="mono">3919</td><td class="bold">Neelanjana  Mukerji</td><td class="mgr">Karishma  Talreja (2298)</td><td class="upct bg-red">16.9%</td><td class="upct bg-red">32.6%</td><td class="upct bg-amber">48.9%</td></tr>
+<tr><td class="mono gray">105</td><td class="mono">3179</td><td class="bold">Nidhi Karthik Nayak</td><td class="mgr">Damini Sabharwal  (2309)</td><td class="upct bg-green">79.0%</td><td class="upct bg-green">82.7%</td><td class="upct bg-red">23.3%</td></tr>
+<tr><td class="mono gray">106</td><td class="mono">3955</td><td class="bold">Niharika  Niharika</td><td class="mgr">Aishwar  Nigam (3227)</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">0.0%</td></tr>
+<tr><td class="mono gray">107</td><td class="mono">3875</td><td class="bold">Nikesh  Bihare</td><td class="mgr">Vinithson  Jeremiah (2867)</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">6.8%</td><td class="upct bg-red">18.2%</td></tr>
+<tr><td class="mono gray">108</td><td class="mono">2739</td><td class="bold">Nikhil  Gupta</td><td class="mgr">Abhishek  Soni (1689)</td><td class="upct bg-amber">58.1%</td><td class="upct bg-amber">45.5%</td><td class="upct bg-red">36.4%</td></tr>
+<tr><td class="mono gray">109</td><td class="mono">3525</td><td class="bold">Nikhil  Pal</td><td class="mgr">Sandeep  Singh (1247)</td><td class="upct bg-green">99.4%</td><td class="upct bg-green">93.8%</td><td class="upct bg-red">22.7%</td></tr>
+<tr><td class="mono gray">110</td><td class="mono">3993</td><td class="bold">Nilisha  Agarwal</td><td class="mgr">Prashant  Ranjan (1231)</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">0.0%</td></tr>
+<tr><td class="mono gray">111</td><td class="mono">3592</td><td class="bold">Nimisha  Mohan</td><td class="mgr">Gaurav Kumar Joshi (1227)</td><td class="upct bg-amber">65.6%</td><td class="upct bg-amber">62.5%</td><td class="upct bg-amber">41.5%</td></tr>
+<tr><td class="mono gray">112</td><td class="mono">3985</td><td class="bold">Nitish  Agrawal</td><td class="mgr">Ashwin Sam Koshy (1545)</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">0.0%</td></tr>
+<tr><td class="mono gray">113</td><td class="mono">760</td><td class="bold">Nityanand  Thakur</td><td class="mgr">Micky  Mowar (1957)</td><td class="upct bg-red">11.2%</td><td class="upct bg-red">22.7%</td><td class="upct bg-red">22.7%</td></tr>
+<tr><td class="mono gray">114</td><td class="mono">3786</td><td class="bold">Pallavi  Katari</td><td class="mgr">Sachin  Chauhan (307)</td><td class="upct bg-amber">56.9%</td><td class="upct bg-green">79.0%</td><td class="upct bg-red">0.0%</td></tr>
+<tr><td class="mono gray">115</td><td class="mono">3224</td><td class="bold">Pauroosh  Kaushal</td><td class="mgr">Damini Sabharwal  (2309)</td><td class="upct bg-red">35.6%</td><td class="upct bg-amber">48.9%</td><td class="upct bg-amber">44.9%</td></tr>
+<tr><td class="mono gray">116</td><td class="mono">3088</td><td class="bold">Pavan  Pari</td><td class="mgr">Vibhor Raju Sharma (2348)</td><td class="upct bg-green">71.2%</td><td class="upct bg-green">99.9%</td><td class="upct bg-amber">59.1%</td></tr>
+<tr><td class="mono gray">117</td><td class="mono">3569</td><td class="bold">Pawan  Kumar</td><td class="mgr">Vatan Vijaykumar Joshi (1368)</td><td class="upct bg-amber">59.4%</td><td class="upct bg-green">77.3%</td><td class="upct bg-amber">59.1%</td></tr>
+<tr><td class="mono gray">118</td><td class="mono">3676</td><td class="bold">Persis  Anil</td><td class="mgr">Roohi Belur Raheem (3171)</td><td class="upct bg-red">26.2%</td><td class="upct bg-amber">51.1%</td><td class="upct bg-red">0.0%</td></tr>
+<tr><td class="mono gray">119</td><td class="mono">3801</td><td class="bold">Philip Ikechukwu Nwachukwu</td><td class="mgr">Aditya  Srivastava (3409)</td><td class="upct bg-red">27.5%</td><td class="upct bg-red">36.2%</td><td class="upct bg-red">0.0%</td></tr>
+<tr><td class="mono gray">120</td><td class="mono">2845</td><td class="bold">Pooja  Sharma</td><td class="mgr">Vatan Vijaykumar Joshi (1368)</td><td class="upct bg-amber">69.4%</td><td class="upct bg-amber">67.2%</td><td class="upct bg-green">72.7%</td></tr>
+<tr><td class="mono gray">121</td><td class="mono">3793</td><td class="bold">Poojitha  Junuthula</td><td class="mgr">Kannan  Manoharan (2525)</td><td class="upct bg-amber">65.0%</td><td class="upct bg-red">22.7%</td><td class="upct bg-amber">66.5%</td></tr>
+<tr><td class="mono gray">122</td><td class="mono">3809</td><td class="bold">Poonam  Yadav</td><td class="mgr">Akash  Mehndiratta (3775)</td><td class="upct bg-green">75.0%</td><td class="upct bg-red">30.1%</td><td class="upct bg-amber">59.1%</td></tr>
+<tr><td class="mono gray">123</td><td class="mono">351</td><td class="bold">Prabin  Singh</td><td class="mgr">Micky  Mowar (1957)</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">35.2%</td><td class="upct bg-red">15.9%</td></tr>
+<tr><td class="mono gray">124</td><td class="mono">3712</td><td class="bold">Prachi  Mandloi</td><td class="mgr">Karishma  Talreja (2298)</td><td class="upct bg-amber">45.0%</td><td class="upct bg-amber">40.9%</td><td class="upct bg-red">2.8%</td></tr>
+<tr><td class="mono gray">125</td><td class="mono">3910</td><td class="bold">Pradeepa  Thirumurthi</td><td class="mgr">Vatan Vijaykumar Joshi (1368)</td><td class="upct bg-red">10.0%</td><td class="upct bg-green">83.5%</td><td class="upct bg-amber">65.9%</td></tr>
+<tr><td class="mono gray">126</td><td class="mono">3662</td><td class="bold">Prajakta  Landge</td><td class="mgr">Vatan Vijaykumar Joshi (1368)</td><td class="upct bg-amber">41.9%</td><td class="upct bg-red">39.8%</td><td class="upct bg-red">38.6%</td></tr>
+<tr><td class="mono gray">127</td><td class="mono">3565</td><td class="bold">Pramila  Chandraiah</td><td class="mgr">Abhishek  Soni (1689)</td><td class="upct bg-red">21.2%</td><td class="upct bg-red">25.0%</td><td class="upct bg-red">13.6%</td></tr>
+<tr><td class="mono gray">128</td><td class="mono">2603</td><td class="bold">Pranav Prakash Kamble</td><td class="mgr">Abhishek  Soni (1689)</td><td class="upct bg-green">78.1%</td><td class="upct bg-amber">46.0%</td><td class="upct bg-red">36.4%</td></tr>
+<tr><td class="mono gray">129</td><td class="mono">3691</td><td class="bold">Prasiddh  Saxena</td><td class="mgr">Anish  Samy (2752)</td><td class="upct bg-red">4.4%</td><td class="upct bg-amber">56.8%</td><td class="upct bg-red">30.7%</td></tr>
+<tr><td class="mono gray">130</td><td class="mono">3624</td><td class="bold">Pratibha  Poddar</td><td class="mgr">Raushan  Ranjan (2704)</td><td class="upct bg-amber">55.6%</td><td class="upct bg-amber">54.0%</td><td class="upct bg-red">21.0%</td></tr>
+<tr><td class="mono gray">131</td><td class="mono">3214</td><td class="bold">Pratik Chetan  Khuthia</td><td class="mgr">Micky  Mowar (1957)</td><td class="upct bg-red">38.8%</td><td class="upct bg-amber">57.4%</td><td class="upct bg-red">13.6%</td></tr>
+<tr><td class="mono gray">132</td><td class="mono">3952</td><td class="bold">Pratiksha Navnath Bidkar</td><td class="mgr">Vibhor Raju Sharma (2348)</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">0.6%</td><td class="upct bg-red">0.0%</td></tr>
+<tr><td class="mono gray">133</td><td class="mono">1297</td><td class="bold">Praveen  Kumar</td><td class="mgr">Ashwin Sam Koshy (1545)</td><td class="upct bg-red">36.2%</td><td class="upct bg-amber">40.9%</td><td class="upct bg-amber">45.5%</td></tr>
+<tr><td class="mono gray">134</td><td class="mono">3933</td><td class="bold">Prem  Kumar</td><td class="mgr">Kanagavalli  Joseph Manns (2992)</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">0.0%</td></tr>
+<tr><td class="mono gray">135</td><td class="mono">3906</td><td class="bold">Priyanka  Sahansi</td><td class="mgr">Sushma  Sharma (2503)</td><td class="upct bg-amber">50.0%</td><td class="upct bg-amber">61.9%</td><td class="upct bg-amber">45.5%</td></tr>
+<tr><td class="mono gray">136</td><td class="mono">2920</td><td class="bold">Ragini  Nayak</td><td class="mgr">Damini Sabharwal  (2309)</td><td class="upct bg-green">93.8%</td><td class="upct bg-green">73.9%</td><td class="upct bg-red">33.0%</td></tr>
+<tr><td class="mono gray">137</td><td class="mono">3722</td><td class="bold">Rajat  Upadhyay</td><td class="mgr">Raushan  Ranjan (2704)</td><td class="upct bg-red">25.0%</td><td class="upct bg-amber">41.5%</td><td class="upct bg-amber">54.5%</td></tr>
+<tr><td class="mono gray">138</td><td class="mono">2982</td><td class="bold">Rajat Kumar Rajput</td><td class="mgr">Abhishek  Soni (1689)</td><td class="upct bg-red">25.0%</td><td class="upct bg-red">36.9%</td><td class="upct bg-amber">40.9%</td></tr>
+<tr><td class="mono gray">139</td><td class="mono">139</td><td class="bold">Rajesh Kumar Gogia</td><td class="mgr">Vatan Vijaykumar Joshi (1368)</td><td class="upct bg-amber">61.4%</td><td class="upct bg-amber">68.2%</td><td class="upct bg-amber">50.0%</td></tr>
+<tr><td class="mono gray">140</td><td class="mono">3929</td><td class="bold">Rashmi Amol Dhumal</td><td class="mgr">Rohit  Aggarwal (1)</td><td class="upct bg-red">8.8%</td><td class="upct bg-red">9.7%</td><td class="upct bg-red">39.3%</td></tr>
+<tr><td class="mono gray">141</td><td class="mono">2704</td><td class="bold">Raushan  Ranjan</td><td class="mgr">Vatan Vijaykumar Joshi (1368)</td><td class="upct bg-green">102.5%</td><td class="upct bg-amber">56.2%</td><td class="upct bg-amber">65.3%</td></tr>
+<tr><td class="mono gray">142</td><td class="mono">1653</td><td class="bold">Ravi  Sharma</td><td class="mgr">Sandeep  Singh (1247)</td><td class="upct bg-amber">46.2%</td><td class="upct bg-amber">43.8%</td><td class="upct bg-amber">59.1%</td></tr>
+<tr><td class="mono gray">143</td><td class="mono">3942</td><td class="bold">Ravti  Tripathi</td><td class="mgr">Akash  Mehndiratta (3775)</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">17.1%</td><td class="upct bg-red">31.8%</td></tr>
+<tr><td class="mono gray">144</td><td class="mono">2771</td><td class="bold">Richa  Singh</td><td class="mgr">Ashwin Sam Koshy (1545)</td><td class="upct bg-red">10.0%</td><td class="upct bg-amber">43.2%</td><td class="upct bg-green">77.3%</td></tr>
+<tr><td class="mono gray">145</td><td class="mono">3694</td><td class="bold">Rishi Anil Rohra</td><td class="mgr">Deepti  Shastri (3318)</td><td class="upct bg-red">33.9%</td><td class="upct bg-red">11.3%</td><td class="upct bg-amber">46.6%</td></tr>
+<tr><td class="mono gray">146</td><td class="mono">3991</td><td class="bold">Ritesh  Behal</td><td class="mgr">Rashmi Amol Dhumal (3929)</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">0.0%</td></tr>
+<tr><td class="mono gray">147</td><td class="mono">3920</td><td class="bold">Rohini  Datla</td><td class="mgr">Ankit Kumar Malik (2178)</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">4.5%</td><td class="upct bg-red">22.7%</td></tr>
+<tr><td class="mono gray">148</td><td class="mono">1761</td><td class="bold">Rohit  Bahl</td><td class="mgr">Ashwin Sam Koshy (1545)</td><td class="upct bg-amber">53.1%</td><td class="upct bg-amber">52.8%</td><td class="upct bg-red">23.9%</td></tr>
+<tr><td class="mono gray">149</td><td class="mono">3908</td><td class="bold">Rohit  Kaswan</td><td class="mgr">Rohit  Aggarwal (1)</td><td class="upct bg-red">33.8%</td><td class="upct bg-red">2.3%</td><td class="upct bg-red">0.0%</td></tr>
+<tr><td class="mono gray">150</td><td class="mono">2859</td><td class="bold">Rohit Sanjay Chahande</td><td class="mgr">Abhishek  Soni (1689)</td><td class="upct bg-green">92.5%</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">0.0%</td></tr>
+<tr><td class="mono gray">151</td><td class="mono">3897</td><td class="bold">Rohith  Baddireddy</td><td class="mgr">Geetha  M (2931)</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">0.0%</td></tr>
+<tr><td class="mono gray">152</td><td class="mono">3171</td><td class="bold">Roohi Belur Raheem</td><td class="mgr">Damini Sabharwal  (2309)</td><td class="upct bg-green">85.6%</td><td class="upct bg-green">75.5%</td><td class="upct bg-amber">60.2%</td></tr>
+<tr><td class="mono gray">153</td><td class="mono">3474</td><td class="bold">Saad Bin Zahid</td><td class="mgr">Ashwin Sam Koshy (1545)</td><td class="upct bg-red">25.0%</td><td class="upct bg-amber">63.1%</td><td class="upct bg-red">36.4%</td></tr>
+<tr><td class="mono gray">154</td><td class="mono">307</td><td class="bold">Sachin  Chauhan</td><td class="mgr">Vatan Vijaykumar Joshi (1368)</td><td class="upct bg-amber">63.4%</td><td class="upct bg-amber">50.0%</td><td class="upct bg-amber">49.2%</td></tr>
+<tr><td class="mono gray">155</td><td class="mono">3813</td><td class="bold">Sachin Hausheeram  Darekar</td><td class="mgr">Rashmi Amol Dhumal (3929)</td><td class="upct bg-red">30.0%</td><td class="upct bg-red">36.4%</td><td class="upct bg-amber">65.9%</td></tr>
+<tr><td class="mono gray">156</td><td class="mono">3541</td><td class="bold">Saema Ambareen  Qazi</td><td class="mgr">Damini Sabharwal  (2309)</td><td class="upct bg-amber">61.9%</td><td class="upct bg-amber">68.2%</td><td class="upct bg-amber">50.0%</td></tr>
+<tr><td class="mono gray">157</td><td class="mono">3982</td><td class="bold">Sagar  Mohapatra</td><td class="mgr">Vibhor Raju Sharma (2348)</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">0.0%</td></tr>
+<tr><td class="mono gray">158</td><td class="mono">3709</td><td class="bold">Sagar  Sagar</td><td class="mgr">Kanav  Jain (2540)</td><td class="upct bg-red">27.5%</td><td class="upct bg-red">26.1%</td><td class="upct bg-red">1.1%</td></tr>
+<tr><td class="mono gray">159</td><td class="mono">3728</td><td class="bold">Sagar  Sood</td><td class="mgr">Aditya  Srivastava (3409)</td><td class="upct bg-red">35.0%</td><td class="upct bg-amber">45.5%</td><td class="upct bg-red">0.0%</td></tr>
+<tr><td class="mono gray">160</td><td class="mono">3470</td><td class="bold">Sagnik  Ghosh</td><td class="mgr">Damini Sabharwal  (2309)</td><td class="upct bg-green">89.8%</td><td class="upct bg-amber">56.8%</td><td class="upct bg-red">31.8%</td></tr>
+<tr><td class="mono gray">161</td><td class="mono">3713</td><td class="bold">Saheed Ayantola Ojewumi</td><td class="mgr">Prabhat  Singh (2116)</td><td class="upct bg-red">25.0%</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">0.0%</td></tr>
+<tr><td class="mono gray">162</td><td class="mono">2433</td><td class="bold">Sai  Prasanth</td><td class="mgr">Abhishek  Soni (1689)</td><td class="upct bg-red">10.0%</td><td class="upct bg-amber">59.1%</td><td class="upct bg-red">18.2%</td></tr>
+<tr><td class="mono gray">163</td><td class="mono">2702</td><td class="bold">Saijal  Dahiya</td><td class="mgr">Sandeep  Singh (1247)</td><td class="upct bg-amber">48.8%</td><td class="upct bg-green">86.7%</td><td class="upct bg-red">29.7%</td></tr>
+<tr><td class="mono gray">164</td><td class="mono">3787</td><td class="bold">Sajiyabanu Hajikhalidbhai  Salat</td><td class="mgr">Muddasir  Mahadik (2585)</td><td class="upct bg-red">28.9%</td><td class="upct bg-red">3.4%</td><td class="upct bg-red">1.1%</td></tr>
+<tr><td class="mono gray">165</td><td class="mono">2427</td><td class="bold">Sameer Hanif Maner</td><td class="mgr">Abhishek  Soni (1689)</td><td class="upct bg-red">1.2%</td><td class="upct bg-red">20.4%</td><td class="upct bg-red">27.3%</td></tr>
+<tr><td class="mono gray">166</td><td class="mono">3234</td><td class="bold">Samira Francis Nigrel</td><td class="mgr">Damini Sabharwal  (2309)</td><td class="upct bg-green">105.1%</td><td class="upct bg-green">76.7%</td><td class="upct bg-amber">50.6%</td></tr>
+<tr><td class="mono gray">167</td><td class="mono">3954</td><td class="bold">Sana Haroon Rashid Kudchi</td><td class="mgr">Rashi  Oberoi (2847)</td><td class="upct bg-red">0.0%</td><td class="upct bg-amber">40.9%</td><td class="upct bg-amber">45.5%</td></tr>
+<tr><td class="mono gray">168</td><td class="mono">2658</td><td class="bold">Sanchita  Dixit</td><td class="mgr">Ashwin Sam Koshy (1545)</td><td class="upct bg-amber">69.6%</td><td class="upct bg-amber">69.3%</td><td class="upct bg-red">15.3%</td></tr>
+<tr><td class="mono gray">169</td><td class="mono">3217</td><td class="bold">Sandeep  Joshi</td><td class="mgr">Karishma  Talreja (2298)</td><td class="upct bg-green">97.5%</td><td class="upct bg-green">102.8%</td><td class="upct bg-green">101.1%</td></tr>
+<tr><td class="mono gray">170</td><td class="mono">2896</td><td class="bold">Sania  Mutreja</td><td class="mgr">Vatan Vijaykumar Joshi (1368)</td><td class="upct bg-green">72.5%</td><td class="upct bg-amber">46.6%</td><td class="upct bg-amber">44.9%</td></tr>
+<tr><td class="mono gray">171</td><td class="mono">802</td><td class="bold">Sanjeev  Kumar</td><td class="mgr">Sandeep  Singh (1247)</td><td class="upct bg-amber">66.2%</td><td class="upct bg-green">87.5%</td><td class="upct bg-red">36.4%</td></tr>
+<tr><td class="mono gray">172</td><td class="mono">3408</td><td class="bold">Sanskriti  Joshi</td><td class="mgr">Ashwin Sam Koshy (1545)</td><td class="upct bg-red">2.5%</td><td class="upct bg-red">17.1%</td><td class="upct bg-red">18.2%</td></tr>
+<tr><td class="mono gray">173</td><td class="mono">2464</td><td class="bold">Saquib Manzoor  Saquib Manzoor</td><td class="mgr">Vatan Vijaykumar Joshi (1368)</td><td class="upct bg-green">90.8%</td><td class="upct bg-green">71.0%</td><td class="upct bg-red">34.1%</td></tr>
+<tr><td class="mono gray">174</td><td class="mono">3526</td><td class="bold">Sarath  G</td><td class="mgr">Micky  Mowar (1957)</td><td class="upct bg-red">35.0%</td><td class="upct bg-red">9.1%</td><td class="upct bg-red">22.7%</td></tr>
+<tr><td class="mono gray">175</td><td class="mono">1942</td><td class="bold">Saurabh  Chauhan</td><td class="mgr">Sandeep  Singh (1247)</td><td class="upct bg-amber">41.2%</td><td class="upct bg-amber">43.2%</td><td class="upct bg-red">31.8%</td></tr>
+<tr><td class="mono gray">176</td><td class="mono">3922</td><td class="bold">Saurabh  Kohli</td><td class="mgr">Vaibhav  Gupta (2361)</td><td class="upct bg-amber">43.1%</td><td class="upct bg-amber">63.6%</td><td class="upct bg-amber">59.1%</td></tr>
+<tr><td class="mono gray">177</td><td class="mono">3930</td><td class="bold">Shah  Alam</td><td class="mgr">Imran Ali Mr (3210)</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">8.0%</td><td class="upct bg-red">0.0%</td></tr>
+<tr><td class="mono gray">178</td><td class="mono">3953</td><td class="bold">Shahbaaz Rasheed Khan</td><td class="mgr">Farha Abdul Razzak Shaikh (2586)</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">2.3%</td><td class="upct bg-red">0.0%</td></tr>
+<tr><td class="mono gray">179</td><td class="mono">3218</td><td class="bold">Shalini  Raghuwanshi</td><td class="mgr">Damini Sabharwal  (2309)</td><td class="upct bg-amber">46.4%</td><td class="upct bg-amber">69.6%</td><td class="upct bg-green">86.5%</td></tr>
+<tr><td class="mono gray">180</td><td class="mono">2335</td><td class="bold">Shifali  Sharma</td><td class="mgr">Vatan Vijaykumar Joshi (1368)</td><td class="upct bg-green">75.6%</td><td class="upct bg-green">90.3%</td><td class="upct bg-amber">52.3%</td></tr>
+<tr><td class="mono gray">181</td><td class="mono">3845</td><td class="bold">Shilpa  Jadaun</td><td class="mgr">Prem  Sharma (1563)</td><td class="upct bg-red">25.0%</td><td class="upct bg-red">9.1%</td><td class="upct bg-red">9.1%</td></tr>
+<tr><td class="mono gray">182</td><td class="mono">2602</td><td class="bold">Shivam  Soni</td><td class="mgr">Micky  Mowar (1957)</td><td class="upct bg-amber">65.9%</td><td class="upct bg-amber">57.9%</td><td class="upct bg-amber">60.2%</td></tr>
+<tr><td class="mono gray">183</td><td class="mono">3898</td><td class="bold">Shivani  Bhatia</td><td class="mgr">Shruti  Chhabra (3317)</td><td class="upct bg-red">15.0%</td><td class="upct bg-red">13.6%</td><td class="upct bg-amber">40.9%</td></tr>
+<tr><td class="mono gray">184</td><td class="mono">3698</td><td class="bold">Shivani  Singh</td><td class="mgr">Sandeep  Singh (1247)</td><td class="upct bg-red">16.2%</td><td class="upct bg-red">13.6%</td><td class="upct bg-red">1.1%</td></tr>
+<tr><td class="mono gray">185</td><td class="mono">3594</td><td class="bold">Shoaib Javid  Peer</td><td class="mgr">Vatan Vijaykumar Joshi (1368)</td><td class="upct bg-red">16.9%</td><td class="upct bg-red">17.1%</td><td class="upct bg-amber">48.9%</td></tr>
+<tr><td class="mono gray">186</td><td class="mono">2188</td><td class="bold">Shova Kant Sharma</td><td class="mgr">Vatan Vijaykumar Joshi (1368)</td><td class="upct bg-amber">55.6%</td><td class="upct bg-amber">59.1%</td><td class="upct bg-red">38.6%</td></tr>
+<tr><td class="mono gray">187</td><td class="mono">3973</td><td class="bold">Shreya Anilrao Kawale</td><td class="mgr">Tanya  Jaiswal (3685)</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">0.0%</td></tr>
+<tr><td class="mono gray">188</td><td class="mono">2458</td><td class="bold">Shrinkhala  Khare</td><td class="mgr">Ashwin Sam Koshy (1545)</td><td class="upct bg-red">16.2%</td><td class="upct bg-red">13.1%</td><td class="upct bg-red">21.0%</td></tr>
+<tr><td class="mono gray">189</td><td class="mono">3317</td><td class="bold">Shruti  Chhabra</td><td class="mgr">Saroj Mala  (2125)</td><td class="upct bg-amber">56.9%</td><td class="upct bg-amber">53.4%</td><td class="upct bg-red">23.9%</td></tr>
+<tr><td class="mono gray">190</td><td class="mono">2607</td><td class="bold">Shruti  Kulshrestha</td><td class="mgr">Abhishek  Soni (1689)</td><td class="upct bg-amber">54.4%</td><td class="upct bg-red">30.7%</td><td class="upct bg-red">22.7%</td></tr>
+<tr><td class="mono gray">191</td><td class="mono">3431</td><td class="bold">Shubhankar  Sharma</td><td class="mgr">Damini Sabharwal  (2309)</td><td class="upct bg-amber">60.0%</td><td class="upct bg-green">84.7%</td><td class="upct bg-amber">68.2%</td></tr>
+<tr><td class="mono gray">192</td><td class="mono">3549</td><td class="bold">Siddhant  Sharma</td><td class="mgr">Damini Sabharwal  (2309)</td><td class="upct bg-red">25.0%</td><td class="upct bg-amber">64.3%</td><td class="upct bg-amber">50.3%</td></tr>
+<tr><td class="mono gray">193</td><td class="mono">3529</td><td class="bold">Silas Edikan  Enefiok</td><td class="mgr">Vatan Vijaykumar Joshi (1368)</td><td class="upct bg-amber">42.5%</td><td class="upct bg-red">15.0%</td><td class="upct bg-red">6.9%</td></tr>
+<tr><td class="mono gray">194</td><td class="mono">3419</td><td class="bold">Simarjeet Singh Bhatia</td><td class="mgr">Vatan Vijaykumar Joshi (1368)</td><td class="upct bg-amber">56.9%</td><td class="upct bg-amber">42.0%</td><td class="upct bg-red">26.3%</td></tr>
+<tr><td class="mono gray">195</td><td class="mono">3555</td><td class="bold">Snehal Deepak  Modi</td><td class="mgr">Vatan Vijaykumar Joshi (1368)</td><td class="upct bg-red">10.6%</td><td class="upct bg-red">25.6%</td><td class="upct bg-amber">62.5%</td></tr>
+<tr><td class="mono gray">196</td><td class="mono">2689</td><td class="bold">Snehal Subhash  Sawant</td><td class="mgr">Micky  Mowar (1957)</td><td class="upct bg-red">25.0%</td><td class="upct bg-red">8.0%</td><td class="upct bg-red">37.5%</td></tr>
+<tr><td class="mono gray">197</td><td class="mono">3114</td><td class="bold">Sonali  Sharma</td><td class="mgr">Sandeep  Singh (1247)</td><td class="upct bg-red">35.0%</td><td class="upct bg-red">22.7%</td><td class="upct bg-red">22.7%</td></tr>
+<tr><td class="mono gray">198</td><td class="mono">2758</td><td class="bold">Sonia  Chhabra</td><td class="mgr">Micky  Mowar (1957)</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">0.0%</td></tr>
+<tr><td class="mono gray">199</td><td class="mono">2794</td><td class="bold">Soniya Ramesh Rana</td><td class="mgr">Ashwin Sam Koshy (1545)</td><td class="upct bg-red">6.9%</td><td class="upct bg-red">26.1%</td><td class="upct bg-red">23.9%</td></tr>
+<tr><td class="mono gray">200</td><td class="mono">3639</td><td class="bold">Soumik  Purkayastha</td><td class="mgr">Ashwin Sam Koshy (1545)</td><td class="upct bg-amber">67.5%</td><td class="upct bg-amber">45.5%</td><td class="upct bg-amber">65.0%</td></tr>
+<tr><td class="mono gray">201</td><td class="mono">3802</td><td class="bold">Sourabh  Sengupta</td><td class="mgr">Imran Ali Mr (3210)</td><td class="upct bg-red">2.5%</td><td class="upct bg-red">31.2%</td><td class="upct bg-amber">46.6%</td></tr>
+<tr><td class="mono gray">202</td><td class="mono">2384</td><td class="bold">Sreemanta  Das</td><td class="mgr">Abhishek  Soni (1689)</td><td class="upct bg-red">30.0%</td><td class="upct bg-amber">47.7%</td><td class="upct bg-amber">40.9%</td></tr>
+<tr><td class="mono gray">203</td><td class="mono">3857</td><td class="bold">Sudhansh  Vishwanadhula</td><td class="mgr">Sagnik  Ghosh (3470)</td><td class="upct bg-amber">45.6%</td><td class="upct bg-amber">40.9%</td><td class="upct bg-red">32.8%</td></tr>
+<tr><td class="mono gray">204</td><td class="mono">3943</td><td class="bold">Sukhbir  Chahal</td><td class="mgr">Akshay  Kumar (519)</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">0.0%</td></tr>
+<tr><td class="mono gray">205</td><td class="mono">2165</td><td class="bold">Sunny  Sirohi</td><td class="mgr">Abhishek  Soni (1689)</td><td class="upct bg-amber">55.0%</td><td class="upct bg-amber">56.8%</td><td class="upct bg-amber">50.0%</td></tr>
+<tr><td class="mono gray">206</td><td class="mono">3354</td><td class="bold">Suraj Anil Shete</td><td class="mgr">Damini Sabharwal  (2309)</td><td class="upct bg-amber">50.9%</td><td class="upct bg-green">72.0%</td><td class="upct bg-amber">45.5%</td></tr>
+<tr><td class="mono gray">207</td><td class="mono">3769</td><td class="bold">Suresh  Venkatachalam</td><td class="mgr">Kannan  Manoharan (2525)</td><td class="upct bg-red">12.5%</td><td class="upct bg-amber">44.3%</td><td class="upct bg-red">22.7%</td></tr>
+<tr><td class="mono gray">208</td><td class="mono">1684</td><td class="bold">Surjeet Singh Tomer</td><td class="mgr">Sandeep  Singh (1247)</td><td class="upct bg-amber">50.0%</td><td class="upct bg-red">22.7%</td><td class="upct bg-red">0.0%</td></tr>
+<tr><td class="mono gray">209</td><td class="mono">3885</td><td class="bold">Sushil  Vishwakarma</td><td class="mgr">Vibhor Raju Sharma (2348)</td><td class="upct bg-red">13.8%</td><td class="upct bg-red">29.6%</td><td class="upct bg-red">26.1%</td></tr>
+<tr><td class="mono gray">210</td><td class="mono">3527</td><td class="bold">Swathi  Raj</td><td class="mgr">Vibhor Raju Sharma (2348)</td><td class="upct bg-green">90.1%</td><td class="upct bg-green">119.8%</td><td class="upct bg-amber">44.3%</td></tr>
+<tr><td class="mono gray">211</td><td class="mono">2762</td><td class="bold">Swati  Kumari</td><td class="mgr">Micky  Mowar (1957)</td><td class="upct bg-amber">68.8%</td><td class="upct bg-red">5.7%</td><td class="upct bg-red">25.0%</td></tr>
+<tr><td class="mono gray">212</td><td class="mono">3984</td><td class="bold">Syed Sabnam Yasmin</td><td class="mgr">Vibhor Raju Sharma (2348)</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">0.0%</td></tr>
+<tr><td class="mono gray">213</td><td class="mono">3970</td><td class="bold">Syeda Amatul Azeem Sabeen</td><td class="mgr">Tanya  Jaiswal (3685)</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">0.0%</td></tr>
+<tr><td class="mono gray">214</td><td class="mono">3818</td><td class="bold">Tanuj  Mehta</td><td class="mgr">Akash  Mehndiratta (3775)</td><td class="upct bg-amber">50.0%</td><td class="upct bg-red">23.9%</td><td class="upct bg-red">0.0%</td></tr>
+<tr><td class="mono gray">215</td><td class="mono">2381</td><td class="bold">Tapos  Mondal</td><td class="mgr">Abhishek  Soni (1689)</td><td class="upct bg-red">3.8%</td><td class="upct bg-red">3.4%</td><td class="upct bg-red">0.0%</td></tr>
+<tr><td class="mono gray">216</td><td class="mono">3130</td><td class="bold">Tarandeep  Kaur</td><td class="mgr">Prashant  Ranjan (1231)</td><td class="upct bg-amber">66.7%</td><td class="upct bg-red">27.6%</td><td class="upct bg-amber">43.4%</td></tr>
+<tr><td class="mono gray">217</td><td class="mono">3446</td><td class="bold">Tata  Subramanian</td><td class="mgr">Damini Sabharwal  (2309)</td><td class="upct bg-green">88.8%</td><td class="upct bg-amber">56.8%</td><td class="upct bg-amber">50.6%</td></tr>
+<tr><td class="mono gray">218</td><td class="mono">3707</td><td class="bold">Trapti  Jha</td><td class="mgr">Sandeep  Singh (1247)</td><td class="upct bg-red">26.2%</td><td class="upct bg-red">23.9%</td><td class="upct bg-red">22.7%</td></tr>
+<tr><td class="mono gray">219</td><td class="mono">3881</td><td class="bold">Tsoaledi Mosa Hlakudi</td><td class="mgr">Shifali  Sharma (2335)</td><td class="upct bg-red">20.6%</td><td class="upct bg-red">34.1%</td><td class="upct bg-red">12.5%</td></tr>
+<tr><td class="mono gray">220</td><td class="mono">3907</td><td class="bold">Ummer Farooq Mir</td><td class="mgr">Kannan  S (3180)</td><td class="upct bg-red">10.0%</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">6.8%</td></tr>
+<tr><td class="mono gray">221</td><td class="mono">2447</td><td class="bold">Urvashi Jeetendra Khelani</td><td class="mgr">Karishma  Talreja (2298)</td><td class="upct bg-amber">43.8%</td><td class="upct bg-amber">52.3%</td><td class="upct bg-red">25.0%</td></tr>
+<tr><td class="mono gray">222</td><td class="mono">3606</td><td class="bold">Usama Tabish  Mohammed</td><td class="mgr">Anirudh  Sharma (2934)</td><td class="upct bg-red">2.5%</td><td class="upct bg-red">3.4%</td><td class="upct bg-red">12.5%</td></tr>
+<tr><td class="mono gray">223</td><td class="mono">3788</td><td class="bold">Vaibhav  Agarwal</td><td class="mgr">Deepanshu  Kumar (2652)</td><td class="upct bg-red">0.0%</td><td class="upct bg-red">18.2%</td><td class="upct bg-red">0.0%</td></tr>
+<tr><td class="mono gray">224</td><td class="mono">2361</td><td class="bold">Vaibhav  Gupta</td><td class="mgr">Ashwin Sam Koshy (1545)</td><td class="upct bg-green">110.6%</td><td class="upct bg-amber">48.3%</td><td class="upct bg-amber">59.1%</td></tr>
+<tr><td class="mono gray">225</td><td class="mono">753</td><td class="bold">Vibhor  Bhardwaj</td><td class="mgr">Vatan Vijaykumar Joshi (1368)</td><td class="upct bg-green">78.8%</td><td class="upct bg-amber">40.9%</td><td class="upct bg-red">29.6%</td></tr>
+<tr><td class="mono gray">226</td><td class="mono">3570</td><td class="bold">Vibhor  Verma</td><td class="mgr">Vatan Vijaykumar Joshi (1368)</td><td class="upct bg-amber">48.8%</td><td class="upct bg-red">15.9%</td><td class="upct bg-amber">40.9%</td></tr>
+<tr><td class="mono gray">227</td><td class="mono">3794</td><td class="bold">Victor Ojochenemi Oguche</td><td class="mgr">Vandana  Kurichh (2408)</td><td class="upct bg-red">10.0%</td><td class="upct bg-red">18.2%</td><td class="upct bg-red">13.6%</td></tr>
+<tr><td class="mono gray">228</td><td class="mono">2867</td><td class="bold">Vinithson  Jeremiah</td><td class="mgr">Ashwin Sam Koshy (1545)</td><td class="upct bg-amber">63.1%</td><td class="upct bg-red">27.8%</td><td class="upct bg-red">36.4%</td></tr>
+<tr><td class="mono gray">229</td><td class="mono">3346</td><td class="bold">Vishal Virendra Jaiswar</td><td class="mgr">Vibhor Raju Sharma (2348)</td><td class="upct bg-green">78.9%</td><td class="upct bg-amber">66.2%</td><td class="upct bg-red">31.2%</td></tr>
+<tr><td class="mono gray">230</td><td class="mono">3460</td><td class="bold">Vivek M Menon</td><td class="mgr">Saroj Mala  (2125)</td><td class="upct bg-amber">65.0%</td><td class="upct bg-amber">43.8%</td><td class="upct bg-amber">46.0%</td></tr>
+<tr><td class="mono gray">231</td><td class="mono">3886</td><td class="bold">Wasiuddin  Wasiuddin</td><td class="mgr">Rishika  Tibarewala (2484)</td><td class="upct bg-amber">63.2%</td><td class="upct bg-amber">56.8%</td><td class="upct bg-amber">69.5%</td></tr>
+<tr><td class="mono gray">232</td><td class="mono">3739</td><td class="bold">Westley  Van Straten</td><td class="mgr">Akshay  Kumar (519)</td><td class="upct bg-amber">40.0%</td><td class="upct bg-amber">45.5%</td><td class="upct bg-amber">68.2%</td></tr>
+
+</tbody>
+</table>
+</div>
+<script>
+var months=["Feb 2026", "Mar 2026", "Apr 2026"];
+function ft(){
+  var q=document.getElementById("q").value.toLowerCase();
+  var mf=document.getElementById("mf").value;
+  var v=0;
+  document.querySelectorAll("#t tbody tr").forEach(function(r){
+    var txt=r.textContent.toLowerCase();
+    var matchQ=!q||txt.includes(q);
+    var matchM=true;
+    if(mf){
+      var cells=r.querySelectorAll(".upct");
+      var any=false;
+      cells.forEach(function(c){
+        var pct=parseFloat(c.textContent);
+        if(mf==="good"&&pct>=70) any=true;
+        if(mf==="mid"&&pct>=40&&pct<70) any=true;
+        if(mf==="low"&&pct<40) any=true;
+      });
+      matchM=any;
+    }
+    var ok=matchQ&&matchM;
+    r.style.display=ok?"":"none";
+    if(ok)v++;
+  });
+  document.getElementById("cnt").textContent=v;
+}
+</script>
+</body>
+</html>

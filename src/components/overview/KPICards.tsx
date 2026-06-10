@@ -12,7 +12,7 @@ export default function KPICards({ stats }: KPICardsProps) {
         <p className="text-xs text-white/50 mt-2">Employees</p>
       </div>
 
-      <StatCard label="Confirmed"   value={stats.confirmed}  accent="teal"  />
+      <StatCard label="Closed"      value={stats.confirmed}  accent="teal"  />
       <StatCard label="In Progress" value={stats.inProgress} accent="blue"  />
       <StatCard label="PA Issued"   value={stats.paIssued}   accent="amber" />
       <StatCard label="PIP Issued"  value={stats.pipIssued}  accent="red"   />

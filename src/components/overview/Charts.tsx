@@ -29,7 +29,7 @@ interface ChartsProps {
 
 export default function Charts({ overall, teams, tenure }: ChartsProps) {
   const donutData = {
-    labels: ["Confirmed", "In Progress", "PA Issued", "PIP Issued"],
+    labels: ["Closed", "In Progress", "PA Issued", "PIP Issued"],
     datasets: [{
       data: [overall.confirmed, overall.inProgress, overall.paIssued, overall.pipIssued],
       backgroundColor: Object.values(STATUS_COLORS).map((c) => c.bg),
@@ -54,7 +54,7 @@ export default function Charts({ overall, teams, tenure }: ChartsProps) {
   const stackedData = {
     labels: teams.map((t) => t.label),
     datasets: [
-      { label: "Confirmed",   data: teams.map((t) => t.confirmed),  backgroundColor: STATUS_COLORS["Confirmed"].bg,    stack: "s" },
+      { label: "Closed",      data: teams.map((t) => t.confirmed),  backgroundColor: STATUS_COLORS["Confirmed"].bg,    stack: "s" },
       { label: "In Progress", data: teams.map((t) => t.inProgress), backgroundColor: STATUS_COLORS["In Progress"].bg,  stack: "s" },
       { label: "PA Issued",   data: teams.map((t) => t.paIssued),   backgroundColor: STATUS_COLORS["PA Issued"].bg,    stack: "s" },
       { label: "PIP Issued",  data: teams.map((t) => t.pipIssued),  backgroundColor: STATUS_COLORS["PIP Issued"].bg,   stack: "s" },

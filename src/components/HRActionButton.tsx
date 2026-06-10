@@ -67,7 +67,7 @@ export default function HRActionButton({ employee, onUpdate }: HRActionButtonPro
           className="w-3.5 h-3.5 rounded border-gray-300 text-green-600 accent-green-600 cursor-pointer"
         />
         <span className={`text-xs font-medium ${confirmed ? "text-green-700" : "text-gray-500"}`}>
-          {confirmed ? "Confirmed" : "Mark confirmed"}
+          {confirmed ? "Closed" : "Mark closed"}
         </span>
         {saving && <span className="text-xs text-gray-300">…</span>}
       </label>

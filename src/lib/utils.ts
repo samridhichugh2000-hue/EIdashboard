@@ -16,17 +16,17 @@ export function getTenureBand(days: number): "early" | "mid" | "complete" {
 
 export function getTenureBadgeClass(days: number): string {
   const band = getTenureBand(days);
-  if (band === "early") return "bg-amber-100 text-amber-800";
-  if (band === "mid") return "bg-blue-100 text-blue-800";
-  return "bg-green-100 text-green-800";
+  if (band === "early") return "bg-amber-100 text-amber-700";
+  if (band === "mid")   return "bg-blue-100 text-blue-700";
+  return "bg-indigo-100 text-indigo-700";
 }
 
 export function getStatusChipClass(status: FinalStatus): string {
   switch (status) {
-    case "Confirmed":   return "bg-green-100 text-green-800";
-    case "In Progress": return "bg-blue-100 text-blue-800";
-    case "PA Issued":   return "bg-amber-100 text-amber-800";
-    case "PIP Issued":  return "bg-red-100 text-red-800";
+    case "Confirmed":   return "bg-emerald-100 text-emerald-700";
+    case "In Progress": return "bg-blue-100 text-blue-700";
+    case "PA Issued":   return "bg-amber-100 text-amber-700";
+    case "PIP Issued":  return "bg-red-100 text-red-700";
   }
 }
 

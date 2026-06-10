@@ -469,7 +469,7 @@ function FeedbackAlertButton({ emp }: { emp: Employee }) {
       <button
         onClick={send}
         disabled={status === "sending"}
-        className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-[#e6f7f5] text-[#1E99C0] border border-[#28C5BE]/30 hover:bg-[#1E99C0] hover:text-white transition-colors disabled:opacity-50"
+        className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-[#EEF2FF] text-indigo-700 border border-indigo-200 hover:bg-indigo-600 hover:text-white transition-colors disabled:opacity-50"
       >
         <svg className="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -499,10 +499,28 @@ function parsePIPDate(dateStr: string): Date | null {
   return new Date(dateStr); // fallback: try native
 }
 
+function AvatarChip({ name }: { name: string }) {
+  const initials = name.trim().split(/\s+/).slice(0, 2).map(w => w[0]?.toUpperCase() ?? "").join("");
+  const palette = [
+    "bg-indigo-100 text-indigo-700",
+    "bg-teal-100 text-teal-700",
+    "bg-violet-100 text-violet-700",
+    "bg-blue-100 text-blue-700",
+    "bg-rose-100 text-rose-700",
+    "bg-amber-100 text-amber-700",
+  ];
+  const idx = name.split("").reduce((a, c) => a + c.charCodeAt(0), 0) % palette.length;
+  return (
+    <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full text-[11px] font-bold shrink-0 ${palette[idx]}`}>
+      {initials}
+    </span>
+  );
+}
+
 function PIPChip({ pipStatus }: { pipStatus: PIPStatus | null }) {
   if (!pipStatus) {
     return (
-      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-teal-50 text-teal-700 border border-teal-100">
+      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-500">
         None
       </span>
     );
@@ -607,7 +625,7 @@ export default function EmployeeTable({ employees }: EmployeeTableProps) {
             placeholder="Search by name or employee ID…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#28C5BE]/40 focus:border-[#28C5BE] bg-white shadow-sm w-72"
+            className="pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300/40 focus:border-indigo-400 bg-white shadow-sm w-72"
           />
         </div>
 
@@ -646,7 +664,7 @@ export default function EmployeeTable({ employees }: EmployeeTableProps) {
         <button
           onClick={() => tableScrollRef.current?.scrollBy({ left: -340, behavior: "smooth" })}
           disabled={!canScrollLeft}
-          className={`absolute left-0 top-1/2 -translate-y-1/2 z-20 h-12 w-9 flex items-center justify-center bg-white border border-gray-200 rounded-r-xl shadow-md transition-all duration-200 ${canScrollLeft ? "text-gray-600 hover:text-[#1E99C0] hover:bg-[#e6f7f5] cursor-pointer" : "text-gray-300 cursor-default"}`}
+          className={`absolute left-0 top-1/2 -translate-y-1/2 z-20 h-12 w-9 flex items-center justify-center bg-white border border-gray-200 rounded-r-xl shadow-md transition-all duration-200 ${canScrollLeft ? "text-gray-600 hover:text-indigo-600 hover:bg-[#EEF2FF] cursor-pointer" : "text-gray-300 cursor-default"}`}
           aria-label="Scroll left"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -658,7 +676,7 @@ export default function EmployeeTable({ employees }: EmployeeTableProps) {
         <button
           onClick={() => tableScrollRef.current?.scrollBy({ left: 340, behavior: "smooth" })}
           disabled={!canScrollRight}
-          className={`absolute right-0 top-1/2 -translate-y-1/2 z-20 h-12 w-9 flex items-center justify-center bg-white border border-gray-200 rounded-l-xl shadow-md transition-all duration-200 ${canScrollRight ? "text-gray-600 hover:text-[#1E99C0] hover:bg-[#e6f7f5] cursor-pointer" : "text-gray-300 cursor-default"}`}
+          className={`absolute right-0 top-1/2 -translate-y-1/2 z-20 h-12 w-9 flex items-center justify-center bg-white border border-gray-200 rounded-l-xl shadow-md transition-all duration-200 ${canScrollRight ? "text-gray-600 hover:text-indigo-600 hover:bg-[#EEF2FF] cursor-pointer" : "text-gray-300 cursor-default"}`}
           aria-label="Scroll right"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -671,10 +689,10 @@ export default function EmployeeTable({ employees }: EmployeeTableProps) {
         {/* Right fade gradient */}
         <div className={`absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-white to-transparent z-10 rounded-r-2xl pointer-events-none transition-opacity duration-200 ${canScrollRight ? "opacity-100" : "opacity-0"}`} />
 
-      <div ref={tableScrollRef} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-x-auto scroll-smooth">
+      <div ref={tableScrollRef} className="bg-white rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.06)] overflow-x-auto scroll-smooth">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-gray-100">
+            <tr className="bg-gray-50 border-b border-gray-100">
               <th className="px-4 py-3.5 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">Employee ID</th>
               <th className="px-4 py-3.5 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">Name</th>
               <th className="px-4 py-3.5 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">Department</th>
@@ -700,16 +718,19 @@ export default function EmployeeTable({ employees }: EmployeeTableProps) {
               </tr>
             ) : (
               filtered.map((emp) => (
-                <tr key={emp.employeeId} className="hover:bg-[#f0fbfa] transition-colors">
-                  <td className="px-4 py-3 font-mono text-xs text-gray-500 whitespace-nowrap">{emp.employeeId}</td>
+                <tr key={emp.employeeId} className="hover:bg-[#EEF2FF] transition-colors">
+                  <td className="px-4 py-3 font-mono text-xs text-gray-400 whitespace-nowrap">{emp.employeeId}</td>
 
                   <td className="px-4 py-3 whitespace-nowrap">
-                    <button
-                      onClick={() => setSelected(emp)}
-                      className="font-medium text-[#1E99C0] hover:text-[#28C5BE] hover:underline text-left"
-                    >
-                      {emp.name}
-                    </button>
+                    <div className="flex items-center gap-2.5">
+                      <AvatarChip name={emp.name} />
+                      <button
+                        onClick={() => setSelected(emp)}
+                        className="font-semibold text-gray-800 hover:text-indigo-600 text-left transition-colors"
+                      >
+                        {emp.name}
+                      </button>
+                    </div>
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap">
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">

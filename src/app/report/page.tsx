@@ -117,11 +117,26 @@ function StatusBadge({ status }: { status: string }) {
 
 // ── shared row renderer ────────────────────────────────────────────────────
 
+function empPriority(emp: Employee): 0 | 1 | 2 {
+  if (emp.finalStatus === "Confirmed") return 2;
+  const hasBelow = [emp.feedback.d30, emp.feedback.d60, emp.feedback.d90]
+    .filter(Boolean).some(e => getFeedbackQuality(e!) === "below");
+  return hasBelow ? 0 : 1;
+}
+
+function sortByPriority(list: Employee[]): Employee[] {
+  return [...list].sort((a, b) => empPriority(a) - empPriority(b));
+}
+
 function EmpRow({ emp, incidents, i, extraCells }: {
   emp: Employee; incidents: RawIncidentRecord[]; i: number; extraCells: React.ReactNode;
 }) {
+  const p = empPriority(emp);
+  const bg = p === 0 ? "bg-red-50"
+           : p === 2 ? (i % 2 === 0 ? "bg-gray-100" : "bg-gray-100/70")
+           : (i % 2 === 0 ? "bg-white" : "bg-slate-50");
   return (
-    <tr className={i % 2 === 0 ? "bg-white" : "bg-slate-50"}>
+    <tr className={bg}>
       <TD><span className="font-mono text-[10px]">{emp.employeeId}</span></TD>
       <TD><span className="font-semibold">{emp.name}</span></TD>
       <TD>{emp.department}</TD>
@@ -227,20 +242,20 @@ function PTTable({ employees, incidentMap }: { employees: Employee[]; incidentMa
 
 export default async function ReportPage() {
   const allEmployees = await getEmployees().catch(() => [] as Employee[]);
-  const active = allEmployees.filter(e => e.finalStatus !== "Confirmed" && e.tenureDays >= 30);
+  const reportPool = allEmployees.filter(e => e.tenureDays >= 30);
 
   const incidentResults = await Promise.allSettled(
-    active.map(e => fetchIncidentData(parseInt(e.employeeId.replace(/\D/g, ""), 10)).catch(() => [] as RawIncidentRecord[]))
+    reportPool.map(e => fetchIncidentData(parseInt(e.employeeId.replace(/\D/g, ""), 10)).catch(() => [] as RawIncidentRecord[]))
   );
   const incidentMap = new Map<string, RawIncidentRecord[]>();
-  active.forEach((e, i) => {
+  reportPool.forEach((e, i) => {
     const r = incidentResults[i];
     incidentMap.set(e.employeeId, r.status === "fulfilled" ? r.value : []);
   });
 
-  const sales   = active.filter(e => e.category === "sales");
-  const trainer = active.filter(e => e.category === "trainer");
-  const pt      = active.filter(e => e.category === "pt");
+  const sales   = sortByPriority(reportPool.filter(e => e.category === "sales"));
+  const trainer = sortByPriority(reportPool.filter(e => e.category === "trainer"));
+  const pt      = sortByPriority(reportPool.filter(e => e.category === "pt"));
   const today   = new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" });
 
   return (
@@ -250,7 +265,7 @@ export default async function ReportPage() {
       <div className="no-print mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-[#1E99C0]">15-Day Performance Report</h1>
-          <p className="text-sm text-gray-500 mt-0.5">All active employees · Generated {today}</p>
+          <p className="text-sm text-gray-500 mt-0.5">All employees · Generated {today}</p>
         </div>
         <div className="flex items-center gap-3">
           <SendEmailButton />
@@ -272,7 +287,7 @@ export default async function ReportPage() {
       {/* Summary */}
       <div className="mb-6 grid grid-cols-4 gap-3">
         {[
-          { label: "Total Active", value: active.length,  color: "bg-[#e6f7f5] text-[#1E99C0]"   },
+          { label: "Total",        value: reportPool.length, color: "bg-[#e6f7f5] text-[#1E99C0]" },
           { label: "Sales",        value: sales.length,   color: "bg-blue-50 text-blue-700"        },
           { label: "Trainer",      value: trainer.length, color: "bg-purple-50 text-purple-700"    },
           { label: "PT Team",      value: pt.length,      color: "bg-amber-50 text-amber-700"      },
@@ -317,8 +332,8 @@ export default async function ReportPage() {
         </section>
       )}
 
-      {active.length === 0 && (
-        <div className="text-center py-20 text-gray-400">No active employees found.</div>
+      {reportPool.length === 0 && (
+        <div className="text-center py-20 text-gray-400">No employees found.</div>
       )}
     </div>
   );

@@ -109,8 +109,20 @@ function pipCell(emp: Employee): string {
 
 // ── table renderers ────────────────────────────────────────────────────────
 
+function empPriority(emp: Employee): 0 | 1 | 2 {
+  if (emp.finalStatus === "Confirmed") return 2;
+  const hasBelow = [emp.feedback.d30, emp.feedback.d60, emp.feedback.d90]
+    .filter(Boolean).some(e => getFeedbackQuality(e!) === "below");
+  return hasBelow ? 0 : 1;
+}
+
+function sortByPriority(list: Employee[]): Employee[] {
+  return [...list].sort((a, b) => empPriority(a) - empPriority(b));
+}
+
 function commonRow(emp: Employee, incidents: RawIncidentRecord[], i: number, extraCells: string): string {
-  const bg = i % 2 === 0 ? C.row0 : C.row1;
+  const p  = empPriority(emp);
+  const bg = p === 0 ? "#fff5f5" : p === 2 ? "#f3f4f6" : i % 2 === 0 ? C.row0 : C.row1;
   return `
   <tr style="background:${bg};">
     ${td(`<span style="font-family:monospace;font-size:10px;">${emp.employeeId}</span>`)}
@@ -152,13 +164,13 @@ function section(title: string, headers: string, rows: string): string {
 }
 
 function buildEmailHtml(
-  active: Employee[],
+  reportPool: Employee[],
   incidentMap: Map<string, RawIncidentRecord[]>,
   today: string
 ): string {
-  const sales   = active.filter(e => e.category === "sales");
-  const trainer = active.filter(e => e.category === "trainer");
-  const pt      = active.filter(e => e.category === "pt");
+  const sales   = sortByPriority(reportPool.filter(e => e.category === "sales"));
+  const trainer = sortByPriority(reportPool.filter(e => e.category === "trainer"));
+  const pt      = sortByPriority(reportPool.filter(e => e.category === "pt"));
 
   const salesRows   = sales.map((e, i) => commonRow(e, incidentMap.get(e.employeeId) ?? [], i, `${td(nrCell(e.nrData[0]), "right")}${td(nrCell(e.nrData[1]), "right")}${td(nrCell(e.nrData[2]), "right")}`)).join("");
   const trainerRows = trainer.map((e, i) => commonRow(e, incidentMap.get(e.employeeId) ?? [], i, `${td(utilCell(e.utilization[0]), "right")}${td(utilCell(e.utilization[1]), "right")}${td(utilCell(e.utilization[2]), "right")}`)).join("");
@@ -187,7 +199,7 @@ function buildEmailHtml(
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#fff;border-left:1px solid #e5e7eb;border-right:1px solid #e5e7eb;">
     <tr>
       ${[
-        { label: "Total Active", val: active.length, bg: C.tealBg, color: C.teal },
+        { label: "Total", val: reportPool.length, bg: C.tealBg, color: C.teal },
         { label: "Sales",        val: sales.length,  bg: "#eff6ff", color: "#1d4ed8" },
         { label: "Trainer",      val: trainer.length, bg: "#f5f3ff", color: "#7c3aed" },
         { label: "PT Team",      val: pt.length,      bg: "#fffbeb", color: "#b45309" },
@@ -228,22 +240,22 @@ export async function POST(request: Request) {
   }
 
   const allEmployees = await getEmployees().catch(() => [] as Employee[]);
-  const active = allEmployees.filter(e => e.finalStatus !== "Confirmed" && e.tenureDays >= 30);
+  const reportPool = allEmployees.filter(e => e.tenureDays >= 30);
 
   const incidentResults = await Promise.allSettled(
-    active.map(e =>
+    reportPool.map(e =>
       fetchIncidentData(parseInt(e.employeeId.replace(/\D/g, ""), 10)).catch(() => [] as RawIncidentRecord[])
     )
   );
   const incidentMap = new Map<string, RawIncidentRecord[]>();
-  active.forEach((e, i) => {
+  reportPool.forEach((e, i) => {
     const r = incidentResults[i];
     incidentMap.set(e.employeeId, r.status === "fulfilled" ? r.value : []);
   });
 
   const today = new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" });
   const subject = `EI Dashboard — 15-Day Performance Report (${today})`;
-  const html = buildEmailHtml(active, incidentMap, today);
+  const html = buildEmailHtml(reportPool, incidentMap, today);
 
   try {
     await sendMail(to, subject, html);

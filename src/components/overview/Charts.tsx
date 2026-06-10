@@ -132,7 +132,7 @@ function TenureBar({ label, sublabel, count, total, color }: {
   const bar = { amber: "bg-amber-400", blue: "bg-blue-400", teal: "bg-teal-500" }[color];
 
   return (
-    <div className="rounded-xl px-4 py-3 bg-[#F4F7FE]">
+    <div className="rounded-xl px-4 py-3 bg-[#EEF2FF]">
       <div className="flex items-center justify-between mb-2">
         <div>
           <p className="text-sm font-semibold text-gray-700">{label}</p>

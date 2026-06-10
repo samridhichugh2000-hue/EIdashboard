@@ -13,7 +13,7 @@ const STATUS_BARS = [
 ];
 
 const TEAM_META: Record<string, { dot: string; iconBg: string; iconColor: string }> = {
-  sales:   { dot: "bg-teal-500",   iconBg: "bg-[#EBF8FF]",  iconColor: "text-[#28C5BE]"   },
+  sales:   { dot: "bg-teal-500",   iconBg: "bg-[#EEF2FF]",  iconColor: "text-[#28C5BE]"   },
   trainer: { dot: "bg-violet-500", iconBg: "bg-violet-50",  iconColor: "text-violet-500"  },
   pt:      { dot: "bg-amber-500",  iconBg: "bg-amber-50",   iconColor: "text-amber-500"   },
 };

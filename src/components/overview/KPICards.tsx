@@ -6,7 +6,7 @@ const CARD_CONFIG = [
   {
     key: "total" as const,
     label: "Total in EI",
-    iconBg: "bg-[#EBF8FF]",
+    iconBg: "bg-[#EEF2FF]",
     barColor: "bg-[#28C5BE]",
     icon: (
       <svg className="w-5 h-5 text-[#28C5BE]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>

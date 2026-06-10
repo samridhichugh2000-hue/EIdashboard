@@ -107,17 +107,10 @@ export async function GET(request: Request) {
   body { margin: 0; font-family: Arial, sans-serif; background: #f3f4f6; }
   .banner { background: #1f2937; color: #fff; text-align: center; padding: 10px 16px; font-size: 12px; }
   .banner strong { color: #28C5BE; }
-  .meta { max-width: 560px; margin: 12px auto 0; background: #fff; border: 1px solid #e5e7eb; border-radius: 8px 8px 0 0; padding: 12px 20px; font-size: 12px; color: #6b7280; border-bottom: 2px dashed #e5e7eb; }
-  .meta span { color: #111827; font-weight: 600; }
 </style>
 </head>
 <body>
   <div class="banner">📧 <strong>Email Preview</strong> — This is a draft. Nothing has been sent yet.</div>
-  <div class="meta">
-    <div><b>To:</b> <span>${body.managerName}</span> (manager — resolved from directory on send)</div>
-    <div style="margin-top:4px;"><b>From:</b> <span>EI Dashboard · HR &lt;${process.env.MS_FROM_EMAIL ?? "hr@koenig-solutions.com"}&gt;</span></div>
-    <div style="margin-top:4px;"><b>Subject:</b> <span>Feedback Reminder — ${body.employeeName} (${body.missingMilestones.join(", ")})</span></div>
-  </div>
   ${wrapped.replace(/^<!DOCTYPE html>[\s\S]*?<body[^>]*>/, "").replace(/<\/body>[\s\S]*$/, "")}
 </body></html>`;
 

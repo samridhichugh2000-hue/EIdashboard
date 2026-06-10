@@ -264,6 +264,19 @@ export async function fetchEmployeeListData(from: string, to: string): Promise<R
   return (content ?? []) as RawEmployeeRecord[];
 }
 
+// Raw version — returns unparsed records for debugging
+export async function fetchRawEmployeeListData(from: string, to: string): Promise<Record<string, unknown>[]> {
+  const { accessToken, deviceToken } = await getEmployeeAuthTokens();
+  const encodedToken = encodeURIComponent(accessToken);
+  const url = `${BASE_URL}/api/Kites/Operator/common?apikey=47&accessToken=${encodedToken}&deviceToken=${deviceToken}`;
+  const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ From: from, To: to }), cache: "no-store" });
+  if (!res.ok) throw new Error(`Employee API failed: ${res.status}`);
+  const data = await res.json();
+  if (data.statuscode !== 200) throw new Error(`Employee API error: ${data.message}`);
+  const content = typeof data.content === "string" ? JSON.parse(data.content) : data.content;
+  return (content ?? []) as Record<string, unknown>[];
+}
+
 export interface RawEmployeeRecord {
   EmpID: number;
   "Employee Name": string;

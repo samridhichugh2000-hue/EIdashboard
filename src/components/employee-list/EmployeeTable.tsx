@@ -201,12 +201,12 @@ function FeedbackAlert({ tenureDays, feedback, empName }: {
                     {m.entry.comment && (
                       <p className="text-xs text-gray-700 leading-snug mb-1.5">{m.entry.comment}</p>
                     )}
-                    {m.entry.areaOfStrength && (
+                    {m.entry.areaOfStrength && m.entry.areaOfStrength !== m.entry.comment && (
                       <p className="text-[10px] text-green-700 mb-0.5">
                         <span className="font-semibold">Strength: </span>{m.entry.areaOfStrength}
                       </p>
                     )}
-                    {m.entry.areaOfImprovement && (
+                    {m.entry.areaOfImprovement && m.entry.areaOfImprovement !== m.entry.comment && (
                       <p className="text-[10px] text-amber-700">
                         <span className="font-semibold">Improve: </span>{m.entry.areaOfImprovement}
                       </p>

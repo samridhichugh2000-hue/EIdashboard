@@ -1,4 +1,4 @@
-import { FinalStatus, EmployeeCategory } from "@/types/employee";
+import { FinalStatus, EmployeeCategory, FeedbackEntry } from "@/types/employee";
 
 export function computeTenureDays(doj: string): number {
   const joinDate = new Date(doj);
@@ -54,6 +54,14 @@ export function categoryIcon(cat: EmployeeCategory): string {
     case "trainer": return "🖥️";
     case "pt":      return "👥";
   }
+}
+
+// Returns the 3-way AI-classified quality, falling back to heuristic when quality is null.
+export function getFeedbackQuality(entry: FeedbackEntry): "above" | "satisfactory" | "below" {
+  if (entry.quality === "above" || entry.quality === "satisfactory" || entry.quality === "below") {
+    return entry.quality;
+  }
+  return isBelowSatisfactory(entry) ? "below" : "satisfactory";
 }
 
 // Returns true when feedback indicates "below satisfactory" performance:

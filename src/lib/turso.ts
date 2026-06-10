@@ -95,4 +95,9 @@ export async function initSchema() {
   try {
     await db.execute({ sql: "ALTER TABLE employees ADD COLUMN hr_remarks TEXT", args: [] });
   } catch {}
+
+  // Migration: add AI-classified quality column to feedback
+  try {
+    await db.execute({ sql: "ALTER TABLE feedback ADD COLUMN quality TEXT", args: [] });
+  } catch {}
 }

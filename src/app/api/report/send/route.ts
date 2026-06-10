@@ -3,6 +3,7 @@ import { getEmployees } from "@/lib/data";
 import { fetchIncidentData, RawIncidentRecord } from "@/lib/rms-auth";
 import { sendMail } from "@/lib/ms-graph";
 import { Employee } from "@/types/employee";
+import { getFeedbackQuality } from "@/lib/utils";
 
 // ── HTML email helpers (inline styles — email-client safe) ─────────────────
 
@@ -41,8 +42,15 @@ function fbCell(entry: Employee["feedback"]["d30"], tenureDays: number, threshol
     if (tenureDays >= threshold) return `<span style="color:${C.red};font-weight:600;">Pending</span>`;
     return `<span style="color:#d1d5db;">—</span>`;
   }
-  return `<div style="min-width:160px;">
-    <div style="font-size:9px;color:#9ca3af;margin-bottom:2px;">${entry.postedOn}</div>
+  const quality = getFeedbackQuality(entry);
+  const bg    = quality === "below" ? "#fef2f2"   : quality === "above" ? "#ecfdf5" : "#f0fdf4";
+  const color = quality === "below" ? C.red       : quality === "above" ? "#059669" : C.green;
+  const label = quality === "below" ? "Below Satisfactory" : quality === "above" ? "Above Satisfactory" : "Satisfactory";
+  return `<div style="min-width:160px;background:${bg};border-radius:4px;padding:4px 6px;">
+    <div style="display:flex;justify-content:space-between;margin-bottom:2px;">
+      <span style="font-size:9px;color:#9ca3af;">${entry.postedOn}</span>
+      <span style="font-size:9px;font-weight:700;color:${color};">${label}</span>
+    </div>
     <div style="font-size:10px;color:#374151;line-height:1.4;word-wrap:break-word;white-space:pre-wrap;">${entry.comment || "—"}</div>
   </div>`;
 }

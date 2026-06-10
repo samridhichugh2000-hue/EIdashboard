@@ -9,6 +9,7 @@ export interface FeedbackEntry {
   postedOn: string; // "DD Mon YYYY"
   areaOfStrength: string | null;
   areaOfImprovement: string | null;
+  quality: "below" | "satisfactory" | "above" | null; // AI-classified; null = pending/fallback
 }
 
 export interface NREntry {

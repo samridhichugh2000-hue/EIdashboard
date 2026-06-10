@@ -8,6 +8,7 @@ import {
 } from "@/lib/rms-auth";
 import { Employee, EmployeeCategory, FinalStatus, FeedbackEntry, PIPStatus, NREntry, UtilizationEntry } from "@/types/employee";
 import { computeTenureDays, inferMilestone, isoToApiDate, todayAsApiDate, cleanFeedbackText } from "@/lib/utils";
+import { classifyFeedbackQuality } from "@/lib/openai";
 
 const CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
 
@@ -41,6 +42,9 @@ export async function getEmployees(category?: EmployeeCategory): Promise<Employe
     try {
       empIds = await syncEmployees(db, now);
       await Promise.all([syncPIP(db, empIds, now), syncFeedback(db, now)]);
+      await classifyPendingFeedback(db).catch((err) =>
+        console.warn("OpenAI feedback classification failed (non-fatal):", err)
+      );
     } catch (err) {
       console.warn("Employee/PIP/Feedback sync failed, serving cached data:", err);
     }
@@ -291,6 +295,37 @@ async function syncUtilization(db: ReturnType<typeof getTursoClient>, now: numbe
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// AI classification — runs after each sync for records with quality IS NULL
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function classifyPendingFeedback(db: ReturnType<typeof getTursoClient>) {
+  const rows = await db.execute({
+    sql: `SELECT employee_id, milestone, comment, area_of_strength, area_of_improvement
+          FROM feedback
+          WHERE quality IS NULL AND comment IS NOT NULL AND comment != ''`,
+    args: [],
+  });
+
+  if (rows.rows.length === 0) return;
+
+  await Promise.allSettled(
+    rows.rows.map(async (r) => {
+      const parts = [r.area_of_strength, r.area_of_improvement, r.comment].filter(Boolean);
+      const text = parts.join(" | ");
+      try {
+        const quality = await classifyFeedbackQuality(text);
+        await db.execute({
+          sql: "UPDATE feedback SET quality = ? WHERE employee_id = ? AND milestone = ?",
+          args: [quality, r.employee_id, r.milestone],
+        });
+      } catch {
+        // non-fatal — leave quality as NULL, heuristic fallback will be used
+      }
+    })
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Read from Turso (enriched with PIP + feedback via JOIN/query)
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -324,7 +359,7 @@ async function readEmployees(db: ReturnType<typeof getTursoClient>, category?: E
 
   // Fetch feedback, NR, and utilization in parallel
   const [fbRows, nrRows, utilRows] = await Promise.all([
-    db.execute({ sql: "SELECT employee_id, milestone, rating, comment, area_of_strength, area_of_improvement, posted_on FROM feedback", args: [] }),
+    db.execute({ sql: "SELECT employee_id, milestone, rating, comment, area_of_strength, area_of_improvement, posted_on, quality FROM feedback", args: [] }),
     db.execute({ sql: "SELECT employee_id, month, val FROM nr_data", args: [] }),
     db.execute({ sql: "SELECT employee_id, month, val FROM utilization", args: [] }),
   ]);
@@ -339,6 +374,7 @@ async function readEmployees(db: ReturnType<typeof getTursoClient>, category?: E
       postedOn:         (r.posted_on as string) ?? "",
       areaOfStrength:   (r.area_of_strength as string | null) ?? null,
       areaOfImprovement:(r.area_of_improvement as string | null) ?? null,
+      quality:          (r.quality as "below" | "satisfactory" | "above" | null) ?? null,
     });
   }
 

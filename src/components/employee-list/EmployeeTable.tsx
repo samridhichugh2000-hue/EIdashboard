@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Employee, NREntry, PIPStatus, UtilizationEntry } from "@/types/employee";
-import { formatDate, getTenureBadgeClass, getStatusChipClass, isBelowSatisfactory } from "@/lib/utils";
+import { formatDate, getTenureBadgeClass, getStatusChipClass, getFeedbackQuality } from "@/lib/utils";
 import EmployeeModal from "@/components/modal/EmployeeModal";
 import IncidentBadge from "@/components/IncidentBadge";
 import HRActionButton from "@/components/HRActionButton";
@@ -52,9 +52,11 @@ function FeedbackAlert({ tenureDays, feedback }: { tenureDays: number; feedback:
   if (tenureDays >= 60 && !feedback.d60) missing.push("60d");
   if (tenureDays >= 90 && !feedback.d90) missing.push("90d");
 
-  // Check quality of received feedbacks
+  // Check quality of received feedbacks using AI classification (with heuristic fallback)
   const received = [feedback.d30, feedback.d60, feedback.d90].filter(Boolean);
-  const hasBelow = received.some(e => isBelowSatisfactory(e!));
+  const qualities = received.map(e => getFeedbackQuality(e!));
+  const hasBelow = qualities.some(q => q === "below");
+  const hasAbove = qualities.some(q => q === "above");
 
   if (missing.length > 0) {
     return (
@@ -78,12 +80,23 @@ function FeedbackAlert({ tenureDays, feedback }: { tenureDays: number; feedback:
     );
   }
 
+  if (hasAbove) {
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap">
+        <svg className="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+        </svg>
+        Above Satisfactory
+      </span>
+    );
+  }
+
   return (
     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-200 whitespace-nowrap">
       <svg className="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
       </svg>
-      All feedbacks received
+      Satisfactory
     </span>
   );
 }

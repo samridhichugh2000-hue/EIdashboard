@@ -1,7 +1,7 @@
 "use client";
 
 import { Employee, FeedbackEntry, HRIncident, NREntry, PIPStatus, UtilizationEntry } from "@/types/employee";
-import { formatDate, getTenureBadgeClass, getStatusChipClass, formatIndianNumber, cleanFeedbackText, isBelowSatisfactory } from "@/lib/utils";
+import { formatDate, getTenureBadgeClass, getStatusChipClass, formatIndianNumber, cleanFeedbackText, getFeedbackQuality } from "@/lib/utils";
 import { useEffect, useState } from "react";
 
 interface EmployeeModalProps { employee: Employee; onClose: () => void; }
@@ -253,10 +253,13 @@ function FeedbackMilestone({ label, entry, tenureDays, minDays }: {
       </div>
     );
   }
-  const below = isBelowSatisfactory(entry);
-  const style = below
-    ? { wrap: "bg-red-50 border-red-200",   label: "text-red-800",   badge: "bg-red-100 text-red-700",   icon: "⚠️", tag: "Below Satisfactory" }
-    : { wrap: "bg-green-50 border-green-200", label: "text-green-800", badge: "bg-green-100 text-green-700", icon: "✓",  tag: "Satisfactory" };
+  const quality = getFeedbackQuality(entry);
+  const style =
+    quality === "below"
+      ? { wrap: "bg-red-50 border-red-200",     label: "text-red-800",     badge: "bg-red-100 text-red-700",     icon: "⚠️", tag: "Below Satisfactory" }
+      : quality === "above"
+      ? { wrap: "bg-emerald-50 border-emerald-200", label: "text-emerald-800", badge: "bg-emerald-100 text-emerald-700", icon: "⭐", tag: "Above Satisfactory" }
+      : { wrap: "bg-green-50 border-green-200",   label: "text-green-800",   badge: "bg-green-100 text-green-700",   icon: "✓",  tag: "Satisfactory" };
   return (
     <div className={`px-4 py-3 rounded-lg border ${style.wrap}`}>
       <div className="flex items-center justify-between mb-1.5">

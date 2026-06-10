@@ -19,7 +19,7 @@ export default function TopBar() {
   });
 
   return (
-    <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-gray-100 px-6 py-3.5 flex items-center justify-between">
+    <header className="sticky top-0 z-30 bg-white shadow-[0_1px_12px_rgba(0,0,0,0.06)] px-6 py-3.5 flex items-center justify-between">
       <div>
         <h1 className="text-base font-semibold text-gray-900 leading-tight">{meta.title}</h1>
         {meta.subtitle && (

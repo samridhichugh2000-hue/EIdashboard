@@ -92,28 +92,28 @@ export default function Charts({ overall, teams, tenure }: ChartsProps) {
 
   return (
     <div className="grid grid-cols-2 gap-4">
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+      <div className="bg-white rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.06)] p-5">
         <h3 className="text-sm font-semibold text-gray-700 mb-4">Status Distribution</h3>
         <div className="h-52">
           <Doughnut data={donutData} options={donutOpts} />
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+      <div className="bg-white rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.06)] p-5">
         <h3 className="text-sm font-semibold text-gray-700 mb-4">Team-wise Count</h3>
         <div className="h-52">
           <Bar data={teamCountData} options={barOpts} />
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+      <div className="bg-white rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.06)] p-5">
         <h3 className="text-sm font-semibold text-gray-700 mb-4">Status per Team</h3>
         <div className="h-52">
           <Bar data={stackedData} options={stackedOpts} />
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+      <div className="bg-white rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.06)] p-5">
         <h3 className="text-sm font-semibold text-gray-700 mb-4">Tenure Distribution</h3>
         <div className="flex flex-col gap-4">
           <TenureBar label="30 Days"  sublabel="≤ 30 days"    count={tenure.early}    total={tenure.early + tenure.mid + tenure.complete} color="amber" />
@@ -132,7 +132,7 @@ function TenureBar({ label, sublabel, count, total, color }: {
   const bar = { amber: "bg-amber-400", blue: "bg-blue-400", teal: "bg-teal-500" }[color];
 
   return (
-    <div className="rounded-xl px-4 py-3 bg-slate-50 border border-slate-100">
+    <div className="rounded-xl px-4 py-3 bg-[#F4F7FE]">
       <div className="flex items-center justify-between mb-2">
         <div>
           <p className="text-sm font-semibold text-gray-700">{label}</p>

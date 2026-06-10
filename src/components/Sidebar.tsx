@@ -18,7 +18,7 @@ export default function Sidebar({ counts }: SidebarProps) {
   const pathname = usePathname();
 
   return (
-    <aside className="w-[220px] min-h-screen flex flex-col shrink-0 bg-[#0f172a] border-r border-white/[0.06]">
+    <aside className="w-[220px] min-h-screen flex flex-col shrink-0 bg-[#1B2559] border-r border-white/[0.06]">
 
       {/* Logo */}
       <div className="px-5 pt-6 pb-5 flex items-center gap-3">
@@ -41,7 +41,7 @@ export default function Sidebar({ counts }: SidebarProps) {
         } />
 
         {/* Teams section */}
-        <p className="px-3 pt-5 pb-2 text-[10px] font-semibold text-slate-600 uppercase tracking-widest">
+        <p className="px-3 pt-5 pb-2 text-[10px] font-semibold text-white/30 uppercase tracking-widest">
           Teams
         </p>
 
@@ -62,7 +62,7 @@ export default function Sidebar({ counts }: SidebarProps) {
         })}
 
         {/* Reports section */}
-        <p className="px-3 pt-5 pb-2 text-[10px] font-semibold text-slate-600 uppercase tracking-widest">
+        <p className="px-3 pt-5 pb-2 text-[10px] font-semibold text-white/30 uppercase tracking-widest">
           Reports
         </p>
 
@@ -76,7 +76,7 @@ export default function Sidebar({ counts }: SidebarProps) {
       {/* Footer */}
       <div className="px-5 py-5 border-t border-white/[0.06]">
         <div className="flex items-center gap-2.5">
-          <div className="w-6 h-6 rounded-full bg-slate-700 flex items-center justify-center shrink-0">
+          <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center shrink-0">
             <svg className="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
             </svg>

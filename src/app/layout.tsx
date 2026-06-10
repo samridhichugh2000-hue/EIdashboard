@@ -24,7 +24,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
 
   return (
     <html lang="en" className={`${inter.variable} h-full`}>
-      <body className="h-full flex bg-slate-50 antialiased font-[family-name:var(--font-inter)]">
+      <body className="h-full flex bg-[#F4F7FE] antialiased font-[family-name:var(--font-inter)]">
         <Sidebar counts={counts} />
         <div className="flex-1 flex flex-col overflow-hidden">
           <TopBar />

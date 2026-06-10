@@ -117,11 +117,13 @@ function StatusBadge({ status }: { status: string }) {
 
 // ── shared row renderer ────────────────────────────────────────────────────
 
-function empPriority(emp: Employee): 0 | 1 | 2 {
-  if (emp.finalStatus === "Confirmed") return 2;
+function empPriority(emp: Employee): 0 | 1 | 2 | 3 {
+  if (emp.finalStatus === "Confirmed") return 3;
   const hasBelow = [emp.feedback.d30, emp.feedback.d60, emp.feedback.d90]
     .filter(Boolean).some(e => getFeedbackQuality(e!) === "below");
-  return hasBelow ? 0 : 1;
+  if (hasBelow) return 0;
+  if (emp.pipStatus !== null) return 1;
+  return 2;
 }
 
 function sortByPriority(list: Employee[]): Employee[] {
@@ -133,7 +135,8 @@ function EmpRow({ emp, incidents, i, extraCells }: {
 }) {
   const p = empPriority(emp);
   const bg = p === 0 ? "bg-red-50"
-           : p === 2 ? (i % 2 === 0 ? "bg-gray-100" : "bg-gray-100/70")
+           : p === 1 ? (i % 2 === 0 ? "bg-amber-50" : "bg-amber-50/70")
+           : p === 3 ? (i % 2 === 0 ? "bg-gray-100" : "bg-gray-100/70")
            : (i % 2 === 0 ? "bg-white" : "bg-slate-50");
   return (
     <tr className={bg}>

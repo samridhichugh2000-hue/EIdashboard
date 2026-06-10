@@ -109,11 +109,13 @@ function pipCell(emp: Employee): string {
 
 // ── table renderers ────────────────────────────────────────────────────────
 
-function empPriority(emp: Employee): 0 | 1 | 2 {
-  if (emp.finalStatus === "Confirmed") return 2;
+function empPriority(emp: Employee): 0 | 1 | 2 | 3 {
+  if (emp.finalStatus === "Confirmed") return 3;
   const hasBelow = [emp.feedback.d30, emp.feedback.d60, emp.feedback.d90]
     .filter(Boolean).some(e => getFeedbackQuality(e!) === "below");
-  return hasBelow ? 0 : 1;
+  if (hasBelow) return 0;
+  if (emp.pipStatus !== null) return 1;
+  return 2;
 }
 
 function sortByPriority(list: Employee[]): Employee[] {
@@ -122,7 +124,10 @@ function sortByPriority(list: Employee[]): Employee[] {
 
 function commonRow(emp: Employee, incidents: RawIncidentRecord[], i: number, extraCells: string): string {
   const p  = empPriority(emp);
-  const bg = p === 0 ? "#fff5f5" : p === 2 ? "#f3f4f6" : i % 2 === 0 ? C.row0 : C.row1;
+  const bg = p === 0 ? "#fff5f5"
+           : p === 1 ? "#fffbeb"
+           : p === 3 ? "#f3f4f6"
+           : i % 2 === 0 ? C.row0 : C.row1;
   return `
   <tr style="background:${bg};">
     ${td(`<span style="font-family:monospace;font-size:10px;">${emp.employeeId}</span>`)}

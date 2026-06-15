@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { lookupUserEmail, sendMail } from "@/lib/ms-graph";
+import { sendMail } from "@/lib/ms-graph";
+import { getManagerEmail } from "@/lib/manager-emails";
 import { formatDate } from "@/lib/utils";
 
 interface AlertBody {
@@ -130,11 +131,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: false, error: "Missing required fields" }, { status: 400 });
   }
 
-  // Look up manager's email via Microsoft Graph
-  const managerEmail = await lookupUserEmail(managerName).catch(() => null);
+  // Resolve manager email from the configured mapping (Graph directory read is
+  // not permitted for this app, so we rely on src/lib/manager-emails.ts).
+  const managerEmail = getManagerEmail(managerName);
   if (!managerEmail) {
     return NextResponse.json(
-      { success: false, error: `Could not find email for manager "${managerName}" in the directory.` },
+      { success: false, error: `No email on file for manager "${managerName}". Add it to src/lib/manager-emails.ts.` },
       { status: 404 }
     );
   }

@@ -555,9 +555,10 @@ export default function EmployeeTable({ employees }: EmployeeTableProps) {
   const [activeCardKey, setActiveCardKey] = useState<string | null>(null);
   const [employeeList, setEmployeeList] = useState<Employee[]>(employees);
   const category = employeeList[0]?.category;
-  const showNR   = category === "sales";
-  const showUtil = category === "trainer";
-  const extraCols = (showNR || showUtil) ? 3 : 0;
+  const showNR    = category === "sales";
+  const showUtil  = category === "trainer";
+  const showAudit = category === "sales"; // Enquiry-audit count column — Sales only
+  const extraCols = ((showNR || showUtil) ? 3 : 0) + (showAudit ? 1 : 0);
 
   const tableScrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft,  setCanScrollLeft]  = useState(false);
@@ -708,6 +709,7 @@ export default function EmployeeTable({ employees }: EmployeeTableProps) {
               <th className="px-3 py-3 text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wide">Tenure</th>
               <th className="px-3 py-3 text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wide">PA / PIP</th>
               <th className="px-3 py-3 text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wide">HR Incidents</th>
+              {showAudit && <th className="px-3 py-3 text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wide">Audit</th>}
               <th className="px-3 py-3 text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wide">Feedback Alert</th>
               {(showNR || showUtil) && <>
                 <th className="px-3 py-3 text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wide">Month 1</th>
@@ -772,6 +774,20 @@ export default function EmployeeTable({ employees }: EmployeeTableProps) {
                   <td className="px-3 py-2.5">
                     <IncidentBadge empCode={emp.employeeId.replace(/\D/g, "")} empName={emp.name} />
                   </td>
+                  {showAudit && (
+                    <td className="px-3 py-2.5">
+                      {emp.auditCount > 0 ? (
+                        <span
+                          className="inline-flex items-center justify-center min-w-[1.5rem] px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-700"
+                          title={`${emp.auditCount} enquiry audit${emp.auditCount === 1 ? "" : "s"} since joining`}
+                        >
+                          {emp.auditCount}
+                        </span>
+                      ) : (
+                        <span className="text-gray-300 text-xs">—</span>
+                      )}
+                    </td>
+                  )}
                   <td className="px-3 py-2.5">
                     <div className="flex flex-col gap-1.5">
                       <FeedbackAlert

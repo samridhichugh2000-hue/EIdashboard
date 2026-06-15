@@ -108,4 +108,9 @@ export async function initSchema() {
   try {
     await db.execute({ sql: "ALTER TABLE employees ADD COLUMN lwd TEXT NOT NULL DEFAULT ''", args: [] });
   } catch {}
+
+  // Migration: add enquiry-audit count (Sales only; matched by csm_name since DOJ)
+  try {
+    await db.execute({ sql: "ALTER TABLE employees ADD COLUMN audit_count INTEGER NOT NULL DEFAULT 0", args: [] });
+  } catch {}
 }

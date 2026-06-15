@@ -56,6 +56,7 @@ export interface Employee {
   resigned: boolean;                  // derived from a real DOR (Date of Resignation)
   dateOfResignation: string | null;   // ISO "YYYY-MM-DD" or null
   lastWorkingDay: string | null;      // ISO "YYYY-MM-DD" or null
+  auditCount: number;                 // Sales only: enquiry audits matched by name since DOJ
 }
 
 export interface OverviewStats {

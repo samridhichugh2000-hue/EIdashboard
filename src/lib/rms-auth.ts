@@ -75,6 +75,73 @@ async function getEmployeeAuthTokens(): Promise<TokenResponse> {
   return { accessToken: employeeTokenCache.accessToken, deviceToken: employeeTokenCache.deviceToken };
 }
 
+// Separate token cache for the Enquiry Audit Report API (role="Enquiry Audit Report")
+let auditTokenCache: (TokenResponse & { expiresAt: number }) | null = null;
+
+async function getAuditAuthTokens(): Promise<TokenResponse> {
+  const now = Date.now();
+  if (auditTokenCache && auditTokenCache.expiresAt > now) {
+    return { accessToken: auditTokenCache.accessToken, deviceToken: auditTokenCache.deviceToken };
+  }
+
+  const res = await fetch(`${BASE_URL}/api/Kites/Operator/GetToken`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      userName: process.env.RMS_AUDIT_USERNAME || "Samridhi_EnquiryAuditRep",
+      userPassword: process.env.RMS_AUDIT_PASSWORD || "aaggw6UgwC$6",
+      userRole: process.env.RMS_AUDIT_ROLE || "Enquiry Audit Report",
+    }),
+    cache: "no-store",
+  });
+
+  if (!res.ok) throw new Error(`GetToken (audit) failed: ${res.status}`);
+
+  const data = await res.json();
+  if (data.statuscode !== 200) throw new Error(`GetToken (audit) error: ${data.message}`);
+
+  auditTokenCache = {
+    accessToken: data.content.accessToken,
+    deviceToken: data.content.deviceToken,
+    expiresAt: now + TOKEN_TTL_MS,
+  };
+
+  return { accessToken: auditTokenCache.accessToken, deviceToken: auditTokenCache.deviceToken };
+}
+
+// Enquiry Audit Report API — apikey=203, bulk call (one request returns all audits).
+// Sales-only. Records carry csm_name (no emp code), so callers match by name.
+export async function fetchAuditData(): Promise<RawAuditRecord[]> {
+  const { accessToken, deviceToken } = await getAuditAuthTokens();
+  const encodedToken = encodeURIComponent(accessToken);
+
+  const url = `${BASE_URL}/api/Kites/Operator/common?apikey=203&accessToken=${encodedToken}&deviceToken=${deviceToken}`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ start_date: "", end_date: "", csm_user_id: "", client_email_address: "" }),
+    cache: "no-store",
+  });
+
+  if (!res.ok) throw new Error(`Audit API failed: ${res.status}`);
+
+  const data = await res.json();
+  if (data.statuscode !== 200) throw new Error(`Audit API error: ${data.message}`);
+
+  const content = typeof data.content === "string" ? JSON.parse(data.content) : data.content;
+  return (content ?? []) as RawAuditRecord[];
+}
+
+export interface RawAuditRecord {
+  csm_name: string | null;
+  created_date_time: string | null;  // "DD Mon YYYY"
+  rating: string | null;
+  remark: string | null;
+  enquiry_id: number | null;
+  enquiry_audit_id: number | null;
+  client_email_adress: string | null; // (sic) API misspells "address"
+}
+
 export async function fetchFeedbackData(startDate: string, endDate: string, employeeName = "") {
   const { accessToken, deviceToken } = await getAuthTokens();
   const encodedToken = encodeURIComponent(accessToken);

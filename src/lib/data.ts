@@ -6,9 +6,10 @@ import {
   fetchPIPData,
   fetchNRData,
   fetchUtilizationData,
+  fetchAuditData,
 } from "@/lib/rms-auth";
 import { Employee, EmployeeCategory, FinalStatus, FeedbackEntry, PIPStatus, NREntry, UtilizationEntry } from "@/types/employee";
-import { computeTenureDays, inferMilestone, isoToApiDate, todayAsApiDate, cleanFeedbackText, cleanResignationDate } from "@/lib/utils";
+import { computeTenureDays, inferMilestone, isoToApiDate, todayAsApiDate, cleanFeedbackText, cleanResignationDate, parseDateOfFb } from "@/lib/utils";
 import { classifyFeedbackQuality } from "@/lib/openai";
 
 const CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
@@ -50,12 +51,12 @@ export const getEmployees = cache(async function getEmployees(category?: Employe
       console.warn("Employee/PIP/Feedback sync failed, serving cached data:", err);
     }
 
-    // NR and Utilization sync independently — run even if employee sync failed,
-    // using whatever employee IDs are already in the DB
+    // NR, Utilization, and Enquiry-Audit sync independently — run even if employee
+    // sync failed, using whatever employees are already in the DB
     try {
-      await Promise.all([syncNR(db, now), syncUtilization(db, now)]);
+      await Promise.all([syncNR(db, now), syncUtilization(db, now), syncAudit(db, now)]);
     } catch (err) {
-      console.warn("NR/Utilization sync failed:", err);
+      console.warn("NR/Utilization/Audit sync failed:", err);
     }
   }
 
@@ -324,6 +325,44 @@ async function syncUtilization(db: ReturnType<typeof getTursoClient>, now: numbe
   );
 }
 
+// Enquiry Audit Report (Sales only). Bulk API with no emp code in records — match by
+// csm_name to the sales employee's name, counting only audits dated on/after their DOJ
+// (so a same-name person's pre-join audits aren't attributed to a new joiner).
+const normName = (s: string) => s.toLowerCase().replace(/\s+/g, " ").trim();
+
+async function syncAudit(db: ReturnType<typeof getTursoClient>, now: number) {
+  let raw: Awaited<ReturnType<typeof fetchAuditData>>;
+  try {
+    raw = await fetchAuditData();
+  } catch {
+    return; // non-fatal — leave existing counts in place
+  }
+
+  // Group parsed audit dates by normalized csm_name
+  const datesByName = new Map<string, number[]>();
+  for (const r of raw) {
+    if (!r.csm_name) continue;
+    const d = parseDateOfFb(r.created_date_time ?? "");
+    if (!d) continue;
+    const key = normName(r.csm_name);
+    if (!datesByName.has(key)) datesByName.set(key, []);
+    datesByName.get(key)!.push(d.getTime());
+  }
+
+  const sales = await db.execute({ sql: "SELECT employee_id, name, doj FROM employees WHERE category = 'sales'", args: [] });
+
+  const stmts: WriteStmt[] = [];
+  for (const e of sales.rows) {
+    const empId = e.employee_id as string;
+    const dojMs = new Date(e.doj as string).getTime();
+    const times = datesByName.get(normName(e.name as string)) ?? [];
+    const count = times.filter((t) => t >= dojMs).length;
+    stmts.push({ sql: "UPDATE employees SET audit_count = ? WHERE employee_id = ?", args: [count, empId] });
+  }
+
+  await batchWrites(db, stmts);
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // AI classification — runs after each sync for records with quality IS NULL
 // ─────────────────────────────────────────────────────────────────────────────
@@ -378,7 +417,7 @@ function monthToOrd(s: string): number {
 
 async function readEmployees(db: ReturnType<typeof getTursoClient>, category?: EmployeeCategory): Promise<Employee[]> {
   const empRows = await db.execute({
-    sql: `SELECT e.employee_id, e.name, e.category, e.department, e.doj, e.reporting_manager, e.final_status, e.hr_remarks, e.dor, e.lwd,
+    sql: `SELECT e.employee_id, e.name, e.category, e.department, e.doj, e.reporting_manager, e.final_status, e.hr_remarks, e.dor, e.lwd, e.audit_count,
                  p.type AS pip_type, p.issued_date, p.end_date
           FROM employees e
           LEFT JOIN pip_status p ON e.employee_id = p.employee_id AND p.type != 'none'
@@ -464,6 +503,7 @@ async function readEmployees(db: ReturnType<typeof getTursoClient>, category?: E
       resigned:          !!(r.dor as string),
       dateOfResignation: (r.dor as string) || null,
       lastWorkingDay:    (r.lwd as string) || null,
+      auditCount:        Number(r.audit_count ?? 0),
     };
   });
 }

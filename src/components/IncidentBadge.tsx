@@ -22,7 +22,7 @@ export default function IncidentBadge({ empCode, empName }: IncidentBadgeProps) 
 
   useEffect(() => {
     if (!empCode) return;
-    fetch(`/api/incidents?empCode=${empCode}`)
+    fetch(`/api/incidents?empCode=${empCode}`, { cache: "no-store" })
       .then((r) => r.json())
       .then((res) => { if (res.success) setIncidents(res.data); })
       .catch(() => setIncidents([]));

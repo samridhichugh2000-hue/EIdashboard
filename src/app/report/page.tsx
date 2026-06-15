@@ -262,7 +262,9 @@ export default async function ReportPage() {
   const incidentMap = new Map<string, RawIncidentRecord[]>();
   reportPool.forEach((e, i) => {
     const r = incidentResults[i];
-    incidentMap.set(e.employeeId, r.status === "fulfilled" ? r.value : []);
+    const recs = r.status === "fulfilled" ? r.value : [];
+    // Exclude incidents predating the employee's joining date (reused emp codes)
+    incidentMap.set(e.employeeId, recs.filter((inc) => inc.IncidentDate.split("T")[0] >= e.doj));
   });
 
   const sales   = sortByPriority(reportPool.filter(e => e.category === "sales"));

@@ -34,11 +34,20 @@ export async function GET(request: Request) {
 
   // Fetch from RMS
   const raw = await fetchIncidentData(Number(empCode));
-  const incidents: HRIncident[] = raw.map((r: RawIncidentRecord) => ({
-    type: r.IncidentType === "Positive Incident" ? "pos" : "neg",
-    comment: r.Reason,
-    date: r.IncidentDate.split("T")[0], // strip time part
-  }));
+
+  // Exclude incidents dated before this employee's joining date — emp codes get reused,
+  // so an old/previous person's incidents can surface under the same code (e.g. 2023
+  // incidents on a 2026 joiner). Look up DOJ and keep only incidents on/after it.
+  const empRow = await db.execute({ sql: "SELECT doj FROM employees WHERE employee_id = ?", args: [`EMP${empCode}`] });
+  const doj = (empRow.rows[0]?.doj as string) ?? "";
+
+  const incidents: HRIncident[] = raw
+    .map((r: RawIncidentRecord) => ({
+      type: (r.IncidentType === "Positive Incident" ? "pos" : "neg") as "pos" | "neg",
+      comment: r.Reason,
+      date: r.IncidentDate.split("T")[0], // strip time part
+    }))
+    .filter((inc) => !doj || inc.date >= doj);
 
   // Cache in Turso — delete stale then insert fresh
   await db.execute({ sql: "DELETE FROM hr_incidents WHERE employee_id = ?", args: [empCode] });

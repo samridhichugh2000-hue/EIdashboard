@@ -29,7 +29,7 @@ export default function EmployeeModal({ employee, onClose }: EmployeeModalProps)
   useEffect(() => {
     const empCode = employee.employeeId.replace(/\D/g, "");
     if (!empCode) { setIncidentsLoading(false); return; }
-    fetch(`/api/incidents?empCode=${empCode}`)
+    fetch(`/api/incidents?empCode=${empCode}`, { cache: "no-store" })
       .then((r) => r.json())
       .then((res) => { if (res.success) setIncidents(res.data); })
       .catch(console.error)

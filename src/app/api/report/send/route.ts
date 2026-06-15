@@ -260,7 +260,9 @@ export async function POST(request: Request) {
   const incidentMap = new Map<string, RawIncidentRecord[]>();
   reportPool.forEach((e, i) => {
     const r = incidentResults[i];
-    incidentMap.set(e.employeeId, r.status === "fulfilled" ? r.value : []);
+    const recs = r.status === "fulfilled" ? r.value : [];
+    // Exclude incidents predating the employee's joining date (reused emp codes)
+    incidentMap.set(e.employeeId, recs.filter((inc) => inc.IncidentDate.split("T")[0] >= e.doj));
   });
 
   const today = new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" });

@@ -66,6 +66,17 @@ export const getEmployees = cache(async function getEmployees(category?: Employe
 // Sync helpers
 // ─────────────────────────────────────────────────────────────────────────────
 
+type WriteStmt = { sql: string; args: (string | number | null)[] };
+
+// Remote Turso has ~70ms/round-trip latency, so awaiting one write per row turns
+// a few hundred rows into tens of seconds. db.batch() sends a chunk of statements
+// in a single round-trip (transaction), collapsing N round-trips into N/chunk.
+async function batchWrites(db: ReturnType<typeof getTursoClient>, stmts: WriteStmt[], chunk = 100) {
+  for (let i = 0; i < stmts.length; i += chunk) {
+    await db.batch(stmts.slice(i, i + chunk), "write");
+  }
+}
+
 // EI tracking window: 90-day evaluation + buffer for completed/closed cohorts that
 // remain on the dashboard. Must comfortably exceed the oldest displayed employee,
 // otherwise aged rows stop being re-fetched and their category/department go stale.
@@ -79,6 +90,7 @@ async function syncEmployees(db: ReturnType<typeof getTursoClient>, now: number)
 
   const raw = await fetchEmployeeListData(from, toDate);
   const empIds: string[] = [];
+  const stmts: WriteStmt[] = [];
 
   for (const r of raw) {
     const empId = `EMP${r.EmpID}`;
@@ -96,7 +108,7 @@ async function syncEmployees(db: ReturnType<typeof getTursoClient>, now: number)
     const lwd = cleanResignationDate(r.LWD);
 
     // ON CONFLICT preserves final_status (manual overrides survive re-syncs) but updates category + department + resignation from API
-    await db.execute({
+    stmts.push({
       sql: `INSERT INTO employees (employee_id, name, category, department, doj, reporting_manager, final_status, dor, lwd, cached_at)
             VALUES (?, ?, ?, ?, ?, ?, 'In Progress', ?, ?, ?)
             ON CONFLICT(employee_id) DO UPDATE SET
@@ -112,6 +124,7 @@ async function syncEmployees(db: ReturnType<typeof getTursoClient>, now: number)
     });
   }
 
+  await batchWrites(db, stmts);
   return empIds;
 }
 
@@ -167,12 +180,13 @@ async function syncPIP(db: ReturnType<typeof getTursoClient>, empIds: string[], 
   const allEmpRows = await db.execute({ sql: "SELECT employee_id FROM employees", args: [] });
   const allEmpIds = allEmpRows.rows.map((r) => r.employee_id as string).filter((id) => id.startsWith("EMP"));
 
+  const stmts: WriteStmt[] = [];
   for (const empId of allEmpIds) {
     const empCode = empId.replace(/\D/g, "");
     const record = activeByCode.get(empCode) ?? null;
     const pipType = record ? (record.Type === "PIP" ? "PIP" : "PA") : null;
 
-    await db.execute({
+    stmts.push({
       sql: `INSERT INTO pip_status (employee_id, type, issued_date, end_date, cached_at)
             VALUES (?, ?, ?, ?, ?)
             ON CONFLICT(employee_id) DO UPDATE SET
@@ -186,19 +200,21 @@ async function syncPIP(db: ReturnType<typeof getTursoClient>, empIds: string[], 
     if (pipType) {
       // Escalate status — but never touch "Confirmed" (terminal state)
       const newStatus = pipType === "PIP" ? "PIP Issued" : "PA Issued";
-      await db.execute({
+      stmts.push({
         sql: `UPDATE employees SET final_status = ? WHERE employee_id = ? AND final_status != 'Confirmed'`,
         args: [newStatus, empId],
       });
     } else {
       // PIP/PA cleared — reset to In Progress (only if it was previously auto-set)
-      await db.execute({
+      stmts.push({
         sql: `UPDATE employees SET final_status = 'In Progress'
               WHERE employee_id = ? AND final_status IN ('PA Issued', 'PIP Issued')`,
         args: [empId],
       });
     }
   }
+
+  await batchWrites(db, stmts);
 }
 
 // Feedback API is a bulk call — one request returns all feedback in the date range.
@@ -221,6 +237,7 @@ async function syncFeedback(db: ReturnType<typeof getTursoClient>, now: number) 
   const dojMap = new Map<string, string>();
   for (const r of empRows.rows) dojMap.set(r.employee_id as string, r.doj as string);
 
+  const stmts: WriteStmt[] = [];
   for (const r of raw) {
     const empId = `EMP${r.ReporteeEmpID}`;
     const doj = dojMap.get(empId);
@@ -233,7 +250,7 @@ async function syncFeedback(db: ReturnType<typeof getTursoClient>, now: number) 
       [r.AreaOfStrength, r.AreaOfImprovement, r.OtherFeedback].filter(Boolean).join(" | ")
     );
 
-    await db.execute({
+    stmts.push({
       sql: `INSERT INTO feedback (employee_id, milestone, rating, comment, area_of_strength, area_of_improvement, other_feedback, posted_on, cached_at)
             VALUES (?, ?, NULL, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(employee_id, milestone) DO UPDATE SET
@@ -252,6 +269,8 @@ async function syncFeedback(db: ReturnType<typeof getTursoClient>, now: number) 
       ],
     });
   }
+
+  await batchWrites(db, stmts);
 }
 
 async function syncNR(db: ReturnType<typeof getTursoClient>, now: number) {

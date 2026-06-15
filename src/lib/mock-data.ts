@@ -23,6 +23,9 @@ export const MOCK_EMPLOYEES: Employee[] = [
     pipStatus: null,
     hrIncidents: [],
     finalStatus: "Confirmed",
+    resigned: false,
+    dateOfResignation: null,
+    lastWorkingDay: null,
   },
   {
     employeeId: "EMP3958",
@@ -46,6 +49,9 @@ export const MOCK_EMPLOYEES: Employee[] = [
     pipStatus: null,
     hrIncidents: [],
     finalStatus: "In Progress",
+    resigned: false,
+    dateOfResignation: null,
+    lastWorkingDay: null,
   },
   {
     employeeId: "EMP3933",
@@ -67,6 +73,9 @@ export const MOCK_EMPLOYEES: Employee[] = [
       { type: "neg", comment: "Late submission on project deadline", date: "20 Jan 2026" },
     ],
     finalStatus: "PA Issued",
+    resigned: false,
+    dateOfResignation: null,
+    lastWorkingDay: null,
   },
   {
     employeeId: "EMP3953",
@@ -92,6 +101,9 @@ export const MOCK_EMPLOYEES: Employee[] = [
       { type: "neg", comment: "Uninformed leave taken without prior RMS application", date: "20 Jan 2026" },
     ],
     finalStatus: "PIP Issued",
+    resigned: false,
+    dateOfResignation: null,
+    lastWorkingDay: null,
   },
   {
     employeeId: "EMP3906",
@@ -116,5 +128,8 @@ export const MOCK_EMPLOYEES: Employee[] = [
       { type: "pos", comment: "Proactively helped a colleague close a difficult deal", date: "10 Mar 2026" },
     ],
     finalStatus: "In Progress",
+    resigned: false,
+    dateOfResignation: null,
+    lastWorkingDay: null,
   },
 ];

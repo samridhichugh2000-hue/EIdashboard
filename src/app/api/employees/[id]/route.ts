@@ -10,7 +10,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   try {
     const db = getTursoClient();
     const result = await db.execute({
-      sql: "SELECT employee_id, name, category, department, doj, reporting_manager, final_status FROM employees WHERE employee_id = ?",
+      sql: "SELECT employee_id, name, category, department, doj, reporting_manager, final_status, dor, lwd FROM employees WHERE employee_id = ?",
       args: [id],
     });
 
@@ -34,6 +34,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       pipStatus:        null,
       hrIncidents:      [],
       finalStatus:      (r.final_status as string) as FinalStatus,
+      resigned:          !!(r.dor as string),
+      dateOfResignation: (r.dor as string) || null,
+      lastWorkingDay:    (r.lwd as string) || null,
     };
 
     return NextResponse.json({ success: true, data: employee });

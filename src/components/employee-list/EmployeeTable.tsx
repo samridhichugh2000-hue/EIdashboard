@@ -512,7 +512,7 @@ function AvatarChip({ name }: { name: string }) {
   ];
   const idx = name.split("").reduce((a, c) => a + c.charCodeAt(0), 0) % palette.length;
   return (
-    <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full text-[11px] font-bold shrink-0 ${palette[idx]}`}>
+    <span className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-[10px] font-bold shrink-0 ${palette[idx]}`}>
       {initials}
     </span>
   );
@@ -697,67 +697,82 @@ export default function EmployeeTable({ employees }: EmployeeTableProps) {
         <div className={`absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-white to-transparent z-10 rounded-r-2xl pointer-events-none transition-opacity duration-200 ${canScrollRight ? "opacity-100" : "opacity-0"}`} />
 
       <div ref={tableScrollRef} className="bg-white rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.06)] overflow-x-auto scroll-smooth">
-        <table className="w-full text-sm">
+        <table className="w-full text-xs">
           <thead>
             <tr className="bg-gray-50 border-b border-gray-100">
-              <th className="px-4 py-3.5 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">Employee ID</th>
-              <th className="px-4 py-3.5 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">Name</th>
-              <th className="px-4 py-3.5 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">Department</th>
-              <th className="px-4 py-3.5 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">Date of Joining</th>
-              <th className="px-4 py-3.5 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">Reporting Manager</th>
-              <th className="px-4 py-3.5 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">Tenure</th>
-              <th className="px-4 py-3.5 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">PA / PIP</th>
-              <th className="px-4 py-3.5 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">HR Incidents</th>
-              <th className="px-4 py-3.5 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">Feedback Alert</th>
+              <th className="px-3 py-3 text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wide">Employee ID</th>
+              <th className="px-3 py-3 text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wide">Name</th>
+              <th className="px-3 py-3 text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wide">Department</th>
+              <th className="px-3 py-3 text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wide">Date of Joining</th>
+              <th className="px-3 py-3 text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wide">Reporting Manager</th>
+              <th className="px-3 py-3 text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wide">Tenure</th>
+              <th className="px-3 py-3 text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wide">PA / PIP</th>
+              <th className="px-3 py-3 text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wide">HR Incidents</th>
+              <th className="px-3 py-3 text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wide">Feedback Alert</th>
               {(showNR || showUtil) && <>
-                <th className="px-4 py-3.5 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">Month 1</th>
-                <th className="px-4 py-3.5 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">Month 2</th>
-                <th className="px-4 py-3.5 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">Month 3</th>
+                <th className="px-3 py-3 text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wide">Month 1</th>
+                <th className="px-3 py-3 text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wide">Month 2</th>
+                <th className="px-3 py-3 text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wide">Month 3</th>
               </>}
-              <th className="px-4 py-3.5 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">Final Status</th>
-              <th className="px-4 py-3.5 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">HR Notes</th>
+              <th className="px-3 py-3 text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wide">Final Status</th>
+              <th className="px-3 py-3 text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wide">HR Notes</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={11 + extraCols} className="px-4 py-10 text-center text-gray-400 text-sm">No employees found</td>
+                <td colSpan={11 + extraCols} className="px-3 py-10 text-center text-gray-400 text-xs">No employees found</td>
               </tr>
             ) : (
               filtered.map((emp) => (
-                <tr key={emp.employeeId} className="hover:bg-[#EEF2FF] transition-colors">
-                  <td className="px-4 py-3 font-mono text-xs text-gray-400 whitespace-nowrap">{emp.employeeId}</td>
+                <tr
+                  key={emp.employeeId}
+                  className={`transition-all ${
+                    emp.resigned
+                      ? "bg-gray-100/70 opacity-50 grayscale hover:opacity-100 hover:grayscale-0 hover:bg-gray-100"
+                      : "hover:bg-[#EEF2FF]"
+                  }`}
+                  title={emp.resigned ? `Resigned${emp.dateOfResignation ? ` on ${formatDate(emp.dateOfResignation)}` : ""}` : undefined}
+                >
+                  <td className="px-3 py-2.5 font-mono text-[10px] text-gray-400 whitespace-nowrap">{emp.employeeId}</td>
 
-                  <td className="px-4 py-3 whitespace-nowrap">
-                    <div className="flex items-center gap-2.5">
+                  <td className="px-3 py-2.5 whitespace-nowrap">
+                    <div className="flex items-center gap-2">
                       <AvatarChip name={emp.name} />
-                      <button
-                        onClick={() => setSelected(emp)}
-                        className="font-semibold text-gray-800 hover:text-indigo-600 text-left transition-colors"
-                      >
-                        {emp.name}
-                      </button>
+                      <div className="flex flex-col">
+                        <button
+                          onClick={() => setSelected(emp)}
+                          className="font-semibold text-gray-800 hover:text-indigo-600 text-left transition-colors text-xs"
+                        >
+                          {emp.name}
+                        </button>
+                        {emp.resigned && (
+                          <span className="mt-0.5 inline-flex w-fit items-center px-1.5 py-0.5 rounded text-[9px] font-semibold bg-rose-100 text-rose-700">
+                            Resigned{emp.lastWorkingDay ? ` · LWD ${formatDate(emp.lastWorkingDay)}` : ""}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                  <td className="px-3 py-2.5 whitespace-nowrap">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-gray-100 text-gray-700">
                       {emp.department || "—"}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{formatDate(emp.doj)}</td>
-                  <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{emp.reportingManager}</td>
-                  <td className="px-4 py-3 whitespace-nowrap">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getTenureBadgeClass(emp.tenureDays)}`}>
+                  <td className="px-3 py-2.5 text-gray-600 whitespace-nowrap">{formatDate(emp.doj)}</td>
+                  <td className="px-3 py-2.5 text-gray-600 whitespace-nowrap">{emp.reportingManager}</td>
+                  <td className="px-3 py-2.5 whitespace-nowrap">
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${getTenureBadgeClass(emp.tenureDays)}`}>
                       {emp.tenureDays}d
                     </span>
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap">
+                  <td className="px-3 py-2.5 whitespace-nowrap">
                     <PIPChip pipStatus={emp.pipStatus} />
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-3 py-2.5">
                     <IncidentBadge empCode={emp.employeeId.replace(/\D/g, "")} empName={emp.name} />
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-3 py-2.5">
                     <div className="flex flex-col gap-1.5">
                       <FeedbackAlert
                         tenureDays={emp.tenureDays}
@@ -771,21 +786,21 @@ export default function EmployeeTable({ employees }: EmployeeTableProps) {
                     </div>
                   </td>
                   {showNR && <>
-                    <td className="px-4 py-3"><NRCell entry={emp.nrData[0]} /></td>
-                    <td className="px-4 py-3"><NRCell entry={emp.nrData[1]} /></td>
-                    <td className="px-4 py-3"><NRCell entry={emp.nrData[2]} /></td>
+                    <td className="px-3 py-2.5"><NRCell entry={emp.nrData[0]} /></td>
+                    <td className="px-3 py-2.5"><NRCell entry={emp.nrData[1]} /></td>
+                    <td className="px-3 py-2.5"><NRCell entry={emp.nrData[2]} /></td>
                   </>}
                   {showUtil && <>
-                    <td className="px-4 py-3"><UtilCell entry={emp.utilization[0]} /></td>
-                    <td className="px-4 py-3"><UtilCell entry={emp.utilization[1]} /></td>
-                    <td className="px-4 py-3"><UtilCell entry={emp.utilization[2]} /></td>
+                    <td className="px-3 py-2.5"><UtilCell entry={emp.utilization[0]} /></td>
+                    <td className="px-3 py-2.5"><UtilCell entry={emp.utilization[1]} /></td>
+                    <td className="px-3 py-2.5"><UtilCell entry={emp.utilization[2]} /></td>
                   </>}
-                  <td className="px-4 py-3 whitespace-nowrap">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusChipClass(emp.finalStatus)}`}>
+                  <td className="px-3 py-2.5 whitespace-nowrap">
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${getStatusChipClass(emp.finalStatus)}`}>
                       {emp.finalStatus === "Confirmed" ? "Closed" : emp.finalStatus}
                     </span>
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap">
+                  <td className="px-3 py-2.5 whitespace-nowrap">
                     <HRActionButton employee={emp} onUpdate={handleHRUpdate} />
                   </td>
                 </tr>

@@ -283,4 +283,6 @@ export interface RawEmployeeRecord {
   "Joining Date": string;  // "2026-03-31T00:00:00"
   "Manager Name": string;
   Department: string;
+  DOR?: string;            // Date of Resignation — "1900-01-01T..." sentinel means not resigned
+  LWD?: string;            // Last Working Day — may be "1900-01-01T..." even when DOR is set
 }

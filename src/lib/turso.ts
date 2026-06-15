@@ -100,4 +100,12 @@ export async function initSchema() {
   try {
     await db.execute({ sql: "ALTER TABLE feedback ADD COLUMN quality TEXT", args: [] });
   } catch {}
+
+  // Migration: add resignation columns (date of resignation + last working day)
+  try {
+    await db.execute({ sql: "ALTER TABLE employees ADD COLUMN dor TEXT NOT NULL DEFAULT ''", args: [] });
+  } catch {}
+  try {
+    await db.execute({ sql: "ALTER TABLE employees ADD COLUMN lwd TEXT NOT NULL DEFAULT ''", args: [] });
+  } catch {}
 }

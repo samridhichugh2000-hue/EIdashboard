@@ -8,7 +8,7 @@ import {
   fetchUtilizationData,
 } from "@/lib/rms-auth";
 import { Employee, EmployeeCategory, FinalStatus, FeedbackEntry, PIPStatus, NREntry, UtilizationEntry } from "@/types/employee";
-import { computeTenureDays, inferMilestone, isoToApiDate, todayAsApiDate, cleanFeedbackText } from "@/lib/utils";
+import { computeTenureDays, inferMilestone, isoToApiDate, todayAsApiDate, cleanFeedbackText, cleanResignationDate } from "@/lib/utils";
 import { classifyFeedbackQuality } from "@/lib/openai";
 
 const CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
@@ -66,10 +66,15 @@ export const getEmployees = cache(async function getEmployees(category?: Employe
 // Sync helpers
 // ─────────────────────────────────────────────────────────────────────────────
 
+// EI tracking window: 90-day evaluation + buffer for completed/closed cohorts that
+// remain on the dashboard. Must comfortably exceed the oldest displayed employee,
+// otherwise aged rows stop being re-fetched and their category/department go stale.
+const EMPLOYEE_SYNC_WINDOW_DAYS = 180;
+
 async function syncEmployees(db: ReturnType<typeof getTursoClient>, now: number): Promise<string[]> {
   const toDate = new Date().toISOString().split("T")[0];
   const fromDate = new Date();
-  fromDate.setDate(fromDate.getDate() - 120);
+  fromDate.setDate(fromDate.getDate() - EMPLOYEE_SYNC_WINDOW_DAYS);
   const from = fromDate.toISOString().split("T")[0];
 
   const raw = await fetchEmployeeListData(from, toDate);
@@ -80,25 +85,30 @@ async function syncEmployees(db: ReturnType<typeof getTursoClient>, now: number)
     const doj = r["Joining Date"].split("T")[0];
     empIds.push(empId);
 
+    // "Corporate Sales" (and any other Sales sub-department) rolls up to the sales category
     const category =
-      r.Department === "Sales" ? "sales" :
+      /sales/i.test(r.Department ?? "") ? "sales" :
       r.Department === "Training Delivery Inhouse" ? "trainer" :
       "pt";
 
     const department = r.Department ?? "";
+    const dor = cleanResignationDate(r.DOR);
+    const lwd = cleanResignationDate(r.LWD);
 
-    // ON CONFLICT preserves final_status (manual overrides survive re-syncs) but updates category + department from API
+    // ON CONFLICT preserves final_status (manual overrides survive re-syncs) but updates category + department + resignation from API
     await db.execute({
-      sql: `INSERT INTO employees (employee_id, name, category, department, doj, reporting_manager, final_status, cached_at)
-            VALUES (?, ?, ?, ?, ?, ?, 'In Progress', ?)
+      sql: `INSERT INTO employees (employee_id, name, category, department, doj, reporting_manager, final_status, dor, lwd, cached_at)
+            VALUES (?, ?, ?, ?, ?, ?, 'In Progress', ?, ?, ?)
             ON CONFLICT(employee_id) DO UPDATE SET
               name              = excluded.name,
               category          = excluded.category,
               department        = excluded.department,
               doj               = excluded.doj,
               reporting_manager = excluded.reporting_manager,
+              dor               = excluded.dor,
+              lwd               = excluded.lwd,
               cached_at         = excluded.cached_at`,
-      args: [empId, r["Employee Name"], category, department, doj, r["Manager Name"], now],
+      args: [empId, r["Employee Name"], category, department, doj, r["Manager Name"], dor, lwd, now],
     });
   }
 
@@ -349,7 +359,7 @@ function monthToOrd(s: string): number {
 
 async function readEmployees(db: ReturnType<typeof getTursoClient>, category?: EmployeeCategory): Promise<Employee[]> {
   const empRows = await db.execute({
-    sql: `SELECT e.employee_id, e.name, e.category, e.department, e.doj, e.reporting_manager, e.final_status, e.hr_remarks,
+    sql: `SELECT e.employee_id, e.name, e.category, e.department, e.doj, e.reporting_manager, e.final_status, e.hr_remarks, e.dor, e.lwd,
                  p.type AS pip_type, p.issued_date, p.end_date
           FROM employees e
           LEFT JOIN pip_status p ON e.employee_id = p.employee_id AND p.type != 'none'
@@ -417,7 +427,7 @@ async function readEmployees(db: ReturnType<typeof getTursoClient>, category?: E
       employeeId:       eid,
       name:             r.name as string,
       category:         r.category as EmployeeCategory,
-      department:       (r.department as string) || (r.category === "sales" ? "Sales" : r.category === "trainer" ? "Training Delivery" : "Personal Training"),
+      department:       (r.department as string) || "—",
       doj,
       tenureDays:       computeTenureDays(doj),
       reportingManager: r.reporting_manager as string,
@@ -432,6 +442,9 @@ async function readEmployees(db: ReturnType<typeof getTursoClient>, category?: E
       hrIncidents: [],
       finalStatus: (r.final_status as string) as FinalStatus,
       hrRemarks:   (r.hr_remarks as string | null) ?? null,
+      resigned:          !!(r.dor as string),
+      dateOfResignation: (r.dor as string) || null,
+      lastWorkingDay:    (r.lwd as string) || null,
     };
   });
 }

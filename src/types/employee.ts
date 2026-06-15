@@ -53,6 +53,9 @@ export interface Employee {
   hrIncidents: HRIncident[];
   finalStatus: FinalStatus;
   hrRemarks?: string | null;
+  resigned: boolean;                  // derived from a real DOR (Date of Resignation)
+  dateOfResignation: string | null;   // ISO "YYYY-MM-DD" or null
+  lastWorkingDay: string | null;      // ISO "YYYY-MM-DD" or null
 }
 
 export interface OverviewStats {

@@ -142,3 +142,13 @@ export function todayAsApiDate(): string {
   const d = new Date();
   return d.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }).replace(/ /g, "-");
 }
+
+// Normalize a resignation/last-working-day value from the employee API.
+// The API uses "1900-01-01T..." (or empty) as the "not set" sentinel.
+// Returns "YYYY-MM-DD" when a real date is present, otherwise "".
+export function cleanResignationDate(raw: string | null | undefined): string {
+  if (!raw) return "";
+  const datePart = raw.split("T")[0];
+  if (!datePart || datePart.startsWith("1900")) return "";
+  return datePart;
+}

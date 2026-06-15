@@ -27,6 +27,7 @@ export const MOCK_EMPLOYEES: Employee[] = [
     dateOfResignation: null,
     lastWorkingDay: null,
     auditCount: 0,
+    audits: [],
   },
   {
     employeeId: "EMP3958",
@@ -54,6 +55,7 @@ export const MOCK_EMPLOYEES: Employee[] = [
     dateOfResignation: null,
     lastWorkingDay: null,
     auditCount: 0,
+    audits: [],
   },
   {
     employeeId: "EMP3933",
@@ -79,6 +81,7 @@ export const MOCK_EMPLOYEES: Employee[] = [
     dateOfResignation: null,
     lastWorkingDay: null,
     auditCount: 0,
+    audits: [],
   },
   {
     employeeId: "EMP3953",
@@ -108,6 +111,7 @@ export const MOCK_EMPLOYEES: Employee[] = [
     dateOfResignation: null,
     lastWorkingDay: null,
     auditCount: 0,
+    audits: [],
   },
   {
     employeeId: "EMP3906",
@@ -136,5 +140,6 @@ export const MOCK_EMPLOYEES: Employee[] = [
     dateOfResignation: null,
     lastWorkingDay: null,
     auditCount: 0,
+    audits: [],
   },
 ];

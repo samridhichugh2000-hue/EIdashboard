@@ -38,6 +38,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       dateOfResignation: (r.dor as string) || null,
       lastWorkingDay:    (r.lwd as string) || null,
       auditCount:        Number(r.audit_count ?? 0),
+      audits:            [],
     };
 
     return NextResponse.json({ success: true, data: employee });

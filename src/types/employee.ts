@@ -34,6 +34,12 @@ export interface HRIncident {
   date: string;
 }
 
+export interface AuditEntry {
+  date: string;            // "DD Mon YYYY" as returned by the API
+  rating: string | null;  // "Below Satisfactory" | "Satisfactory" | "Role model" | ""
+  remark: string | null;
+}
+
 export interface Employee {
   employeeId: string;
   name: string;
@@ -57,6 +63,7 @@ export interface Employee {
   dateOfResignation: string | null;   // ISO "YYYY-MM-DD" or null
   lastWorkingDay: string | null;      // ISO "YYYY-MM-DD" or null
   auditCount: number;                 // Sales only: enquiry audits matched by name since DOJ
+  audits: AuditEntry[];               // Sales only: the matched audit entries (for drill-down)
 }
 
 export interface OverviewStats {

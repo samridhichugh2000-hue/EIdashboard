@@ -8,7 +8,7 @@ import {
   fetchUtilizationData,
   fetchAuditData,
 } from "@/lib/rms-auth";
-import { Employee, EmployeeCategory, FinalStatus, FeedbackEntry, PIPStatus, NREntry, UtilizationEntry } from "@/types/employee";
+import { Employee, EmployeeCategory, FinalStatus, FeedbackEntry, PIPStatus, NREntry, UtilizationEntry, AuditEntry } from "@/types/employee";
 import { computeTenureDays, inferMilestone, isoToApiDate, todayAsApiDate, cleanFeedbackText, cleanResignationDate, parseDateOfFb } from "@/lib/utils";
 import { classifyFeedbackQuality } from "@/lib/openai";
 
@@ -335,18 +335,24 @@ async function syncAudit(db: ReturnType<typeof getTursoClient>, now: number) {
   try {
     raw = await fetchAuditData();
   } catch {
-    return; // non-fatal — leave existing counts in place
+    return; // non-fatal — leave existing entries in place
   }
 
-  // Group parsed audit dates by normalized csm_name
-  const datesByName = new Map<string, number[]>();
+  // Group full audit records by normalized csm_name (with a parsed timestamp for the DOJ filter)
+  const recsByName = new Map<string, { ms: number; date: string; rating: string | null; remark: string | null; enquiryId: number | null }[]>();
   for (const r of raw) {
     if (!r.csm_name) continue;
     const d = parseDateOfFb(r.created_date_time ?? "");
     if (!d) continue;
     const key = normName(r.csm_name);
-    if (!datesByName.has(key)) datesByName.set(key, []);
-    datesByName.get(key)!.push(d.getTime());
+    if (!recsByName.has(key)) recsByName.set(key, []);
+    recsByName.get(key)!.push({
+      ms: d.getTime(),
+      date: r.created_date_time ?? "",
+      rating: r.rating ?? null,
+      remark: cleanFeedbackText(r.remark) || null,
+      enquiryId: r.enquiry_id ?? null,
+    });
   }
 
   const sales = await db.execute({ sql: "SELECT employee_id, name, doj FROM employees WHERE category = 'sales'", args: [] });
@@ -355,9 +361,20 @@ async function syncAudit(db: ReturnType<typeof getTursoClient>, now: number) {
   for (const e of sales.rows) {
     const empId = e.employee_id as string;
     const dojMs = new Date(e.doj as string).getTime();
-    const times = datesByName.get(normName(e.name as string)) ?? [];
-    const count = times.filter((t) => t >= dojMs).length;
-    stmts.push({ sql: "UPDATE employees SET audit_count = ? WHERE employee_id = ?", args: [count, empId] });
+    // Only audits dated on/after the employee's joining date (newest first)
+    const entries = (recsByName.get(normName(e.name as string)) ?? [])
+      .filter((a) => a.ms >= dojMs)
+      .sort((a, b) => b.ms - a.ms);
+
+    // Replace this employee's entries and refresh the count
+    stmts.push({ sql: "DELETE FROM audit_entries WHERE employee_id = ?", args: [empId] });
+    for (const a of entries) {
+      stmts.push({
+        sql: "INSERT INTO audit_entries (employee_id, audit_date, rating, remark, enquiry_id, cached_at) VALUES (?, ?, ?, ?, ?, ?)",
+        args: [empId, a.date, a.rating, a.remark, a.enquiryId, now],
+      });
+    }
+    stmts.push({ sql: "UPDATE employees SET audit_count = ? WHERE employee_id = ?", args: [entries.length, empId] });
   }
 
   await batchWrites(db, stmts);
@@ -426,11 +443,12 @@ async function readEmployees(db: ReturnType<typeof getTursoClient>, category?: E
     args: category ? [category] : [],
   });
 
-  // Fetch feedback, NR, and utilization in parallel
-  const [fbRows, nrRows, utilRows] = await Promise.all([
+  // Fetch feedback, NR, utilization, and audit entries in parallel
+  const [fbRows, nrRows, utilRows, auditRows] = await Promise.all([
     db.execute({ sql: "SELECT employee_id, milestone, rating, comment, area_of_strength, area_of_improvement, posted_on, quality FROM feedback", args: [] }),
     db.execute({ sql: "SELECT employee_id, month, val FROM nr_data", args: [] }),
     db.execute({ sql: "SELECT employee_id, month, val FROM utilization", args: [] }),
+    db.execute({ sql: "SELECT employee_id, audit_date, rating, remark FROM audit_entries ORDER BY id", args: [] }),
   ]);
 
   const feedbackMap = new Map<string, Map<string, FeedbackEntry>>();
@@ -460,6 +478,18 @@ async function readEmployees(db: ReturnType<typeof getTursoClient>, category?: E
     const code = r.employee_id as string;
     if (!utilMap.has(code)) utilMap.set(code, []);
     utilMap.get(code)!.push({ month: r.month as string, val: Number(r.val) });
+  }
+
+  // Audit entries keyed by employee_id (already filtered to since-DOJ at sync, newest first)
+  const auditMap = new Map<string, AuditEntry[]>();
+  for (const r of auditRows.rows) {
+    const eid = r.employee_id as string;
+    if (!auditMap.has(eid)) auditMap.set(eid, []);
+    auditMap.get(eid)!.push({
+      date:   (r.audit_date as string) ?? "",
+      rating: (r.rating as string | null) ?? null,
+      remark: (r.remark as string | null) ?? null,
+    });
   }
 
   return empRows.rows.map((r) => {
@@ -504,6 +534,7 @@ async function readEmployees(db: ReturnType<typeof getTursoClient>, category?: E
       dateOfResignation: (r.dor as string) || null,
       lastWorkingDay:    (r.lwd as string) || null,
       auditCount:        Number(r.audit_count ?? 0),
+      audits:            auditMap.get(eid) ?? [],
     };
   });
 }

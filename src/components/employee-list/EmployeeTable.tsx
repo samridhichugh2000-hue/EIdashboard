@@ -8,6 +8,7 @@ import DateRangeFilter from "@/components/DateRangeFilter";
 import { formatDate, getTenureBadgeClass, getStatusChipClass, getFeedbackQuality } from "@/lib/utils";
 import EmployeeModal from "@/components/modal/EmployeeModal";
 import IncidentBadge from "@/components/IncidentBadge";
+import AuditBadge from "@/components/AuditBadge";
 import HRActionButton from "@/components/HRActionButton";
 
 
@@ -776,16 +777,7 @@ export default function EmployeeTable({ employees }: EmployeeTableProps) {
                   </td>
                   {showAudit && (
                     <td className="px-3 py-2.5">
-                      {emp.auditCount > 0 ? (
-                        <span
-                          className="inline-flex items-center justify-center min-w-[1.5rem] px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-700"
-                          title={`${emp.auditCount} enquiry audit${emp.auditCount === 1 ? "" : "s"} since joining`}
-                        >
-                          {emp.auditCount}
-                        </span>
-                      ) : (
-                        <span className="text-gray-300 text-xs">—</span>
-                      )}
+                      <AuditBadge audits={emp.audits} empName={emp.name} />
                     </td>
                   )}
                   <td className="px-3 py-2.5">

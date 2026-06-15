@@ -59,6 +59,16 @@ export async function initSchema() {
       UNIQUE(employee_id, month)
     );
 
+    CREATE TABLE IF NOT EXISTS audit_entries (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      employee_id TEXT NOT NULL,
+      audit_date TEXT,
+      rating TEXT,
+      remark TEXT,
+      enquiry_id INTEGER,
+      cached_at INTEGER NOT NULL
+    );
+
     CREATE TABLE IF NOT EXISTS pip_status (
       employee_id TEXT PRIMARY KEY,
       type TEXT,

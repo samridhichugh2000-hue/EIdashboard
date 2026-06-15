@@ -558,8 +558,9 @@ export default function EmployeeTable({ employees }: EmployeeTableProps) {
   const category = employeeList[0]?.category;
   const showNR    = category === "sales";
   const showUtil  = category === "trainer";
-  const showAudit = category === "sales"; // Enquiry-audit count column — Sales only
-  const extraCols = ((showNR || showUtil) ? 3 : 0) + (showAudit ? 1 : 0);
+  const showAudit = category === "sales";   // Enquiry-audit count column — Sales only
+  const showNegFb = category === "trainer"; // Negative-feedback count column — Trainer only
+  const extraCols = ((showNR || showUtil) ? 3 : 0) + (showAudit ? 1 : 0) + (showNegFb ? 1 : 0);
 
   const tableScrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft,  setCanScrollLeft]  = useState(false);
@@ -711,6 +712,7 @@ export default function EmployeeTable({ employees }: EmployeeTableProps) {
               <th className="px-3 py-3 text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wide">PA / PIP</th>
               <th className="px-3 py-3 text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wide">HR Incidents</th>
               {showAudit && <th className="px-3 py-3 text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wide">Audit</th>}
+              {showNegFb && <th className="px-3 py-3 text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wide">Neg. Feedback</th>}
               <th className="px-3 py-3 text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wide">Feedback Alert</th>
               {(showNR || showUtil) && <>
                 <th className="px-3 py-3 text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wide">Month 1</th>
@@ -778,6 +780,20 @@ export default function EmployeeTable({ employees }: EmployeeTableProps) {
                   {showAudit && (
                     <td className="px-3 py-2.5">
                       <AuditBadge audits={emp.audits} empName={emp.name} />
+                    </td>
+                  )}
+                  {showNegFb && (
+                    <td className="px-3 py-2.5">
+                      {emp.negFeedbackCount > 0 ? (
+                        <span
+                          className="inline-flex items-center justify-center min-w-[1.5rem] px-2 py-0.5 rounded-full text-[11px] font-semibold bg-red-100 text-red-700"
+                          title={`${emp.negFeedbackCount} negative feedback${emp.negFeedbackCount === 1 ? "" : "s"}`}
+                        >
+                          {emp.negFeedbackCount}
+                        </span>
+                      ) : (
+                        <span className="text-gray-300 text-xs">—</span>
+                      )}
                     </td>
                   )}
                   <td className="px-3 py-2.5">

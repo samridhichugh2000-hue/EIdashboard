@@ -123,4 +123,12 @@ export async function initSchema() {
   try {
     await db.execute({ sql: "ALTER TABLE employees ADD COLUMN audit_count INTEGER NOT NULL DEFAULT 0", args: [] });
   } catch {}
+
+  // Migration: email (needed to query the negative-feedback API) + neg-feedback count (Trainer only)
+  try {
+    await db.execute({ sql: "ALTER TABLE employees ADD COLUMN email TEXT NOT NULL DEFAULT ''", args: [] });
+  } catch {}
+  try {
+    await db.execute({ sql: "ALTER TABLE employees ADD COLUMN neg_feedback_count INTEGER NOT NULL DEFAULT 0", args: [] });
+  } catch {}
 }

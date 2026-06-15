@@ -7,6 +7,7 @@ import {
   fetchNRData,
   fetchUtilizationData,
   fetchAuditData,
+  fetchNegativeFeedbackData,
 } from "@/lib/rms-auth";
 import { Employee, EmployeeCategory, FinalStatus, FeedbackEntry, PIPStatus, NREntry, UtilizationEntry, AuditEntry } from "@/types/employee";
 import { computeTenureDays, inferMilestone, isoToApiDate, todayAsApiDate, cleanFeedbackText, cleanResignationDate, parseDateOfFb } from "@/lib/utils";
@@ -51,12 +52,12 @@ export const getEmployees = cache(async function getEmployees(category?: Employe
       console.warn("Employee/PIP/Feedback sync failed, serving cached data:", err);
     }
 
-    // NR, Utilization, and Enquiry-Audit sync independently — run even if employee
-    // sync failed, using whatever employees are already in the DB
+    // NR, Utilization, Enquiry-Audit, and Negative-Feedback sync independently — run even
+    // if employee sync failed, using whatever employees are already in the DB
     try {
-      await Promise.all([syncNR(db, now), syncUtilization(db, now), syncAudit(db, now)]);
+      await Promise.all([syncNR(db, now), syncUtilization(db, now), syncAudit(db, now), syncNegFeedback(db, now)]);
     } catch (err) {
-      console.warn("NR/Utilization/Audit sync failed:", err);
+      console.warn("NR/Utilization/Audit/NegFeedback sync failed:", err);
     }
   }
 
@@ -107,11 +108,12 @@ async function syncEmployees(db: ReturnType<typeof getTursoClient>, now: number)
     const department = r.Department ?? "";
     const dor = cleanResignationDate(r.DOR);
     const lwd = cleanResignationDate(r.LWD);
+    const email = r.Email ?? "";
 
-    // ON CONFLICT preserves final_status (manual overrides survive re-syncs) but updates category + department + resignation from API
+    // ON CONFLICT preserves final_status (manual overrides survive re-syncs) but updates category + department + resignation + email from API
     stmts.push({
-      sql: `INSERT INTO employees (employee_id, name, category, department, doj, reporting_manager, final_status, dor, lwd, cached_at)
-            VALUES (?, ?, ?, ?, ?, ?, 'In Progress', ?, ?, ?)
+      sql: `INSERT INTO employees (employee_id, name, category, department, doj, reporting_manager, final_status, dor, lwd, email, cached_at)
+            VALUES (?, ?, ?, ?, ?, ?, 'In Progress', ?, ?, ?, ?)
             ON CONFLICT(employee_id) DO UPDATE SET
               name              = excluded.name,
               category          = excluded.category,
@@ -120,8 +122,9 @@ async function syncEmployees(db: ReturnType<typeof getTursoClient>, now: number)
               reporting_manager = excluded.reporting_manager,
               dor               = excluded.dor,
               lwd               = excluded.lwd,
+              email             = excluded.email,
               cached_at         = excluded.cached_at`,
-      args: [empId, r["Employee Name"], category, department, doj, r["Manager Name"], dor, lwd, now],
+      args: [empId, r["Employee Name"], category, department, doj, r["Manager Name"], dor, lwd, email, now],
     });
   }
 
@@ -380,6 +383,35 @@ async function syncAudit(db: ReturnType<typeof getTursoClient>, now: number) {
   await batchWrites(db, stmts);
 }
 
+// Negative Feedback Count (Trainer only). Per-email lookup; the API returns one row per
+// trainer profile sharing that email, with Trainer = "Name;<empCode>". Match the row whose
+// embedded emp code equals the dashboard employee so a shared email's other profile isn't counted.
+async function syncNegFeedback(db: ReturnType<typeof getTursoClient>, now: number) {
+  const rows = await db.execute({
+    sql: "SELECT employee_id, email FROM employees WHERE category = 'trainer' AND email != ''",
+    args: [],
+  });
+
+  const results = await Promise.allSettled(
+    rows.rows.map(async (r) => {
+      const empId = r.employee_id as string;
+      const empCode = empId.replace(/\D/g, "");
+      const recs = await fetchNegativeFeedbackData(r.email as string);
+      const total = recs
+        .filter((rec) => (rec.Trainer ?? "").split(";").pop()?.trim() === empCode)
+        .reduce((sum, rec) => sum + (Number(rec.Total) || 0), 0);
+      return { empId, total };
+    })
+  );
+
+  const stmts: WriteStmt[] = [];
+  for (const res of results) {
+    if (res.status !== "fulfilled") continue; // skip failures — keep existing count
+    stmts.push({ sql: "UPDATE employees SET neg_feedback_count = ? WHERE employee_id = ?", args: [res.value.total, res.value.empId] });
+  }
+  await batchWrites(db, stmts);
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // AI classification — runs after each sync for records with quality IS NULL
 // ─────────────────────────────────────────────────────────────────────────────
@@ -434,7 +466,7 @@ function monthToOrd(s: string): number {
 
 async function readEmployees(db: ReturnType<typeof getTursoClient>, category?: EmployeeCategory): Promise<Employee[]> {
   const empRows = await db.execute({
-    sql: `SELECT e.employee_id, e.name, e.category, e.department, e.doj, e.reporting_manager, e.final_status, e.hr_remarks, e.dor, e.lwd, e.audit_count,
+    sql: `SELECT e.employee_id, e.name, e.category, e.department, e.doj, e.reporting_manager, e.final_status, e.hr_remarks, e.dor, e.lwd, e.audit_count, e.neg_feedback_count,
                  p.type AS pip_type, p.issued_date, p.end_date
           FROM employees e
           LEFT JOIN pip_status p ON e.employee_id = p.employee_id AND p.type != 'none'
@@ -535,6 +567,7 @@ async function readEmployees(db: ReturnType<typeof getTursoClient>, category?: E
       lastWorkingDay:    (r.lwd as string) || null,
       auditCount:        Number(r.audit_count ?? 0),
       audits:            auditMap.get(eid) ?? [],
+      negFeedbackCount:  Number(r.neg_feedback_count ?? 0),
     };
   });
 }

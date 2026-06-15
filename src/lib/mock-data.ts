@@ -28,6 +28,7 @@ export const MOCK_EMPLOYEES: Employee[] = [
     lastWorkingDay: null,
     auditCount: 0,
     audits: [],
+    negFeedbackCount: 0,
   },
   {
     employeeId: "EMP3958",
@@ -56,6 +57,7 @@ export const MOCK_EMPLOYEES: Employee[] = [
     lastWorkingDay: null,
     auditCount: 0,
     audits: [],
+    negFeedbackCount: 0,
   },
   {
     employeeId: "EMP3933",
@@ -82,6 +84,7 @@ export const MOCK_EMPLOYEES: Employee[] = [
     lastWorkingDay: null,
     auditCount: 0,
     audits: [],
+    negFeedbackCount: 0,
   },
   {
     employeeId: "EMP3953",
@@ -112,6 +115,7 @@ export const MOCK_EMPLOYEES: Employee[] = [
     lastWorkingDay: null,
     auditCount: 0,
     audits: [],
+    negFeedbackCount: 0,
   },
   {
     employeeId: "EMP3906",
@@ -141,5 +145,6 @@ export const MOCK_EMPLOYEES: Employee[] = [
     lastWorkingDay: null,
     auditCount: 0,
     audits: [],
+    negFeedbackCount: 0,
   },
 ];

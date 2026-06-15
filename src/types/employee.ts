@@ -64,6 +64,7 @@ export interface Employee {
   lastWorkingDay: string | null;      // ISO "YYYY-MM-DD" or null
   auditCount: number;                 // Sales only: enquiry audits matched by name since DOJ
   audits: AuditEntry[];               // Sales only: the matched audit entries (for drill-down)
+  negFeedbackCount: number;           // Trainer only: negative feedback count (matched by email + emp code)
 }
 
 export interface OverviewStats {

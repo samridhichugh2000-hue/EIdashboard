@@ -52,6 +52,7 @@ export default async function OverviewPage({ searchParams }: PageProps) {
   const all = await getEmployees();
 
   const employees = all.filter((e) => {
+    if (e.resigned)           return false; // resigned excluded from EI totals/stats (still shown greyed on list pages)
     if (from && e.doj < from) return false;
     if (to   && e.doj > to)   return false;
     return true;

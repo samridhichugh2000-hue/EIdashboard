@@ -15,7 +15,8 @@ export const metadata: Metadata = {
 };
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  const employees = await getEmployees().catch(() => []);
+  // Sidebar badges count active employees only — resigned are excluded (still shown greyed on list pages)
+  const employees = (await getEmployees().catch(() => [])).filter((e) => !e.resigned);
   const counts = {
     sales:   employees.filter((e) => e.category === "sales").length,
     trainer: employees.filter((e) => e.category === "trainer").length,

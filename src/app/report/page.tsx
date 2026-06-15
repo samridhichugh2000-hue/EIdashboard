@@ -92,6 +92,12 @@ function UtilCol({ entry }: { entry: UtilizationEntry | undefined }) {
   return <span className={color}>{entry.month}<br />{entry.val.toFixed(1)}%</span>;
 }
 
+function CountCell({ count, tone }: { count: number; tone: "amber" | "red" }) {
+  if (!count) return <span className="text-gray-300">—</span>;
+  const cls = tone === "red" ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700";
+  return <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-semibold ${cls}`}>{count}</span>;
+}
+
 // ── shared table primitives ────────────────────────────────────────────────
 
 const TH = ({ children, right }: { children: React.ReactNode; right?: boolean }) => (
@@ -187,13 +193,14 @@ function SalesTable({ employees, incidentMap }: { employees: Employee[]; inciden
         <tr className="bg-[#1E99C0] text-white text-left">
           {COMMON_HEADERS}
           <TH right>NR M1</TH><TH right>NR M2</TH><TH right>NR M3</TH>
+          <TH>Audit</TH>
           <TH>Final Status</TH><TH>HR Remarks</TH><TH>Closed</TH>
         </tr>
       </thead>
       <tbody>
         {employees.map((emp, i) => (
           <EmpRow key={emp.employeeId} emp={emp} incidents={incidentMap.get(emp.employeeId) ?? []} i={i}
-            extraCells={<><TD right><NRCol entry={emp.nrData[0]} /></TD><TD right><NRCol entry={emp.nrData[1]} /></TD><TD right><NRCol entry={emp.nrData[2]} /></TD></>}
+            extraCells={<><TD right><NRCol entry={emp.nrData[0]} /></TD><TD right><NRCol entry={emp.nrData[1]} /></TD><TD right><NRCol entry={emp.nrData[2]} /></TD><TD center><CountCell count={emp.auditCount} tone="amber" /></TD></>}
           />
         ))}
       </tbody>
@@ -208,13 +215,14 @@ function TrainerTable({ employees, incidentMap }: { employees: Employee[]; incid
         <tr className="bg-[#1E99C0] text-white text-left">
           {COMMON_HEADERS}
           <TH right>Util M1</TH><TH right>Util M2</TH><TH right>Util M3</TH>
+          <TH>Neg. FB</TH>
           <TH>Final Status</TH><TH>HR Remarks</TH><TH>Closed</TH>
         </tr>
       </thead>
       <tbody>
         {employees.map((emp, i) => (
           <EmpRow key={emp.employeeId} emp={emp} incidents={incidentMap.get(emp.employeeId) ?? []} i={i}
-            extraCells={<><TD right><UtilCol entry={emp.utilization[0]} /></TD><TD right><UtilCol entry={emp.utilization[1]} /></TD><TD right><UtilCol entry={emp.utilization[2]} /></TD></>}
+            extraCells={<><TD right><UtilCol entry={emp.utilization[0]} /></TD><TD right><UtilCol entry={emp.utilization[1]} /></TD><TD right><UtilCol entry={emp.utilization[2]} /></TD><TD center><CountCell count={emp.negFeedbackCount} tone="red" /></TD></>}
           />
         ))}
       </tbody>
@@ -246,7 +254,7 @@ function PTTable({ employees, incidentMap }: { employees: Employee[]; incidentMa
 
 export default async function ReportPage() {
   const allEmployees = await getEmployees().catch(() => [] as Employee[]);
-  const reportPool = allEmployees.filter(e => e.tenureDays >= 30);
+  const reportPool = allEmployees.filter(e => e.tenureDays >= 30 && !e.resigned);
 
   const incidentResults = await Promise.allSettled(
     reportPool.map(e => fetchIncidentData(parseInt(e.employeeId.replace(/\D/g, ""), 10)).catch(() => [] as RawIncidentRecord[]))

@@ -66,6 +66,11 @@ function utilCell(entry: Employee["utilization"][0] | undefined): string {
   return `<span style="color:${color}">${entry.month}<br/>${entry.val.toFixed(1)}%</span>`;
 }
 
+function countCell(count: number, tone: "amber" | "red"): string {
+  if (!count) return `<span style="color:#d1d5db;">—</span>`;
+  return tone === "red" ? badge(String(count), C.red, "#fee2e2") : badge(String(count), C.amber, "#fef3c7");
+}
+
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
 }
@@ -149,10 +154,10 @@ function commonRow(emp: Employee, incidents: RawIncidentRecord[], i: number, ext
 }
 
 function salesHeaders(): string {
-  return `<tr>${th("Emp ID")}${th("Name")}${th("Department")}${th("Manager")}${th("DOJ")}${th("Tenure","center")}${th("PA/PIP","center")}${th("Incidents","center")}${th("30d FB","center")}${th("60d FB","center")}${th("90d FB","center")}${th("NR M1","right")}${th("NR M2","right")}${th("NR M3","right")}${th("Final Status","center")}${th("HR Remarks")}${th("Closed","center")}</tr>`;
+  return `<tr>${th("Emp ID")}${th("Name")}${th("Department")}${th("Manager")}${th("DOJ")}${th("Tenure","center")}${th("PA/PIP","center")}${th("Incidents","center")}${th("30d FB","center")}${th("60d FB","center")}${th("90d FB","center")}${th("NR M1","right")}${th("NR M2","right")}${th("NR M3","right")}${th("Audit","center")}${th("Final Status","center")}${th("HR Remarks")}${th("Closed","center")}</tr>`;
 }
 function trainerHeaders(): string {
-  return `<tr>${th("Emp ID")}${th("Name")}${th("Department")}${th("Manager")}${th("DOJ")}${th("Tenure","center")}${th("PA/PIP","center")}${th("Incidents","center")}${th("30d FB","center")}${th("60d FB","center")}${th("90d FB","center")}${th("Util M1","right")}${th("Util M2","right")}${th("Util M3","right")}${th("Final Status","center")}${th("HR Remarks")}${th("Closed","center")}</tr>`;
+  return `<tr>${th("Emp ID")}${th("Name")}${th("Department")}${th("Manager")}${th("DOJ")}${th("Tenure","center")}${th("PA/PIP","center")}${th("Incidents","center")}${th("30d FB","center")}${th("60d FB","center")}${th("90d FB","center")}${th("Util M1","right")}${th("Util M2","right")}${th("Util M3","right")}${th("Neg. FB","center")}${th("Final Status","center")}${th("HR Remarks")}${th("Closed","center")}</tr>`;
 }
 function ptHeaders(): string {
   return `<tr>${th("Emp ID")}${th("Name")}${th("Department")}${th("Manager")}${th("DOJ")}${th("Tenure","center")}${th("PA/PIP","center")}${th("Incidents","center")}${th("30d FB","center")}${th("60d FB","center")}${th("90d FB","center")}${th("Final Status","center")}${th("HR Remarks")}${th("Closed","center")}</tr>`;
@@ -177,8 +182,8 @@ function buildEmailHtml(
   const trainer = sortByPriority(reportPool.filter(e => e.category === "trainer"));
   const pt      = sortByPriority(reportPool.filter(e => e.category === "pt"));
 
-  const salesRows   = sales.map((e, i) => commonRow(e, incidentMap.get(e.employeeId) ?? [], i, `${td(nrCell(e.nrData[0]), "right")}${td(nrCell(e.nrData[1]), "right")}${td(nrCell(e.nrData[2]), "right")}`)).join("");
-  const trainerRows = trainer.map((e, i) => commonRow(e, incidentMap.get(e.employeeId) ?? [], i, `${td(utilCell(e.utilization[0]), "right")}${td(utilCell(e.utilization[1]), "right")}${td(utilCell(e.utilization[2]), "right")}`)).join("");
+  const salesRows   = sales.map((e, i) => commonRow(e, incidentMap.get(e.employeeId) ?? [], i, `${td(nrCell(e.nrData[0]), "right")}${td(nrCell(e.nrData[1]), "right")}${td(nrCell(e.nrData[2]), "right")}${td(countCell(e.auditCount, "amber"), "center")}`)).join("");
+  const trainerRows = trainer.map((e, i) => commonRow(e, incidentMap.get(e.employeeId) ?? [], i, `${td(utilCell(e.utilization[0]), "right")}${td(utilCell(e.utilization[1]), "right")}${td(utilCell(e.utilization[2]), "right")}${td(countCell(e.negFeedbackCount, "red"), "center")}`)).join("");
   const ptRows      = pt.map((e, i) => commonRow(e, incidentMap.get(e.employeeId) ?? [], i, "")).join("");
 
   return `<!DOCTYPE html>
@@ -245,7 +250,7 @@ export async function POST(request: Request) {
   }
 
   const allEmployees = await getEmployees().catch(() => [] as Employee[]);
-  const reportPool = allEmployees.filter(e => e.tenureDays >= 30);
+  const reportPool = allEmployees.filter(e => e.tenureDays >= 30 && !e.resigned);
 
   const incidentResults = await Promise.allSettled(
     reportPool.map(e =>

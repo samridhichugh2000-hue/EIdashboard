@@ -88,6 +88,20 @@ export default function HRActionButton({ employee, onUpdate }: HRActionButtonPro
     };
   }, []);
 
+  // Resigned employees are read-only — no status change or remark editing
+  if (employee.resigned) {
+    return (
+      <div className="flex flex-col gap-1 min-w-[160px]" onClick={(e) => e.stopPropagation()}>
+        <span className="text-xs font-medium text-gray-500">
+          {employee.finalStatus === "Confirmed" ? "Closed" : employee.finalStatus}
+        </span>
+        {employee.hrRemarks
+          ? <span className="text-[11px] text-gray-500 italic break-words">{employee.hrRemarks}</span>
+          : <span className="text-[10px] text-gray-400 italic">Resigned · read only</span>}
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-1.5 min-w-[160px]" onClick={(e) => e.stopPropagation()}>
       {/* Closed checkbox */}

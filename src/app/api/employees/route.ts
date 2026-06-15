@@ -27,6 +27,15 @@ export async function PATCH(request: Request) {
   const { employeeId, confirmed, hr_remarks } = body;
   const db = getTursoClient();
 
+  // Resigned employees are read-only — reject edits (defense-in-depth; the UI also hides the controls)
+  const existing = await db.execute({ sql: "SELECT dor FROM employees WHERE employee_id = ?", args: [employeeId] });
+  if (existing.rows.length === 0) {
+    return NextResponse.json({ success: false, error: "Employee not found" }, { status: 404 });
+  }
+  if (existing.rows[0].dor) {
+    return NextResponse.json({ success: false, error: "Resigned employees are read-only" }, { status: 409 });
+  }
+
   const newStatus = confirmed ? "Confirmed" : "In Progress";
   const normalizedRemarks = typeof hr_remarks === "string" && hr_remarks.trim() ? hr_remarks.trim() : null;
 

@@ -254,7 +254,8 @@ function PTTable({ employees, incidentMap }: { employees: Employee[]; incidentMa
 
 export default async function ReportPage() {
   const allEmployees = await getEmployees().catch(() => [] as Employee[]);
-  const reportPool = allEmployees.filter(e => e.tenureDays >= 30 && !e.resigned);
+  // Match the dashboard Sales/Trainer/PT sections (all active employees per category); resigned stay excluded
+  const reportPool = allEmployees.filter(e => !e.resigned);
 
   const incidentResults = await Promise.allSettled(
     reportPool.map(e => fetchIncidentData(parseInt(e.employeeId.replace(/\D/g, ""), 10)).catch(() => [] as RawIncidentRecord[]))

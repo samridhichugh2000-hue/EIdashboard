@@ -250,7 +250,8 @@ export async function POST(request: Request) {
   }
 
   const allEmployees = await getEmployees().catch(() => [] as Employee[]);
-  const reportPool = allEmployees.filter(e => e.tenureDays >= 30 && !e.resigned);
+  // Match the dashboard Sales/Trainer/PT sections (all active employees per category); resigned stay excluded
+  const reportPool = allEmployees.filter(e => !e.resigned);
 
   const incidentResults = await Promise.allSettled(
     reportPool.map(e =>

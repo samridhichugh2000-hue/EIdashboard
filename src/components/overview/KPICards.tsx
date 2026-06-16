@@ -1,7 +1,7 @@
 import { OverviewStats } from "@/types/employee";
 
 const RINGS = [
-  { key: "confirmed"  as const, label: "Closed",      stroke: "#10B981", track: "#D1FAE5" },
+  { key: "confirmed"  as const, label: "Not to be monitored", stroke: "#10B981", track: "#D1FAE5" },
   { key: "inProgress" as const, label: "In Progress", stroke: "#6C63FF", track: "#EDE9FE" },
   { key: "paIssued"   as const, label: "PA Issued",   stroke: "#F59E0B", track: "#FEF3C7" },
   { key: "pipIssued"  as const, label: "PIP Issued",  stroke: "#EF4444", track: "#FEE2E2" },

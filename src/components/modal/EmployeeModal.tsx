@@ -14,8 +14,8 @@ function monthToOrdinal(monthStr: string): number {
 }
 
 export default function EmployeeModal({ employee, onClose }: EmployeeModalProps) {
-  const [incidents, setIncidents] = useState<HRIncident[]>(employee.hrIncidents);
-  const [incidentsLoading, setIncidentsLoading] = useState(true);
+  const [incidents] = useState<HRIncident[]>(employee.hrIncidents);
+  const [incidentsLoading] = useState(false);
   const [pipData, setPipData] = useState<PIPStatus | null | undefined>(undefined); // undefined = loading
   const [utilizationData, setUtilizationData] = useState<UtilizationEntry[] | undefined>(undefined); // undefined = loading
   const [nrData, setNrData] = useState<NREntry[] | undefined>(undefined); // undefined = loading
@@ -25,16 +25,6 @@ export default function EmployeeModal({ employee, onClose }: EmployeeModalProps)
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
   }, [onClose]);
-
-  useEffect(() => {
-    const empCode = employee.employeeId.replace(/\D/g, "");
-    if (!empCode) { setIncidentsLoading(false); return; }
-    fetch(`/api/incidents?empCode=${empCode}`, { cache: "no-store" })
-      .then((r) => r.json())
-      .then((res) => { if (res.success) setIncidents(res.data); })
-      .catch(console.error)
-      .finally(() => setIncidentsLoading(false));
-  }, [employee.employeeId]);
 
   useEffect(() => {
     const empCode = employee.employeeId.replace(/\D/g, "");

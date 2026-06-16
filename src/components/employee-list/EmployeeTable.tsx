@@ -775,7 +775,7 @@ export default function EmployeeTable({ employees }: EmployeeTableProps) {
                     <PIPChip pipStatus={emp.pipStatus} />
                   </td>
                   <td className="px-3 py-2.5">
-                    <IncidentBadge empCode={emp.employeeId.replace(/\D/g, "")} empName={emp.name} />
+                    <IncidentBadge incidents={emp.hrIncidents} empName={emp.name} />
                   </td>
                   {showAudit && (
                     <td className="px-3 py-2.5">

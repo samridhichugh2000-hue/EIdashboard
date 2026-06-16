@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import { HRIncident } from "@/types/employee";
 
 interface IncidentBadgeProps {
-  empCode: string;
+  incidents: HRIncident[];
   empName: string;
 }
 
@@ -14,19 +14,10 @@ interface PopupPos {
   left: number;
 }
 
-export default function IncidentBadge({ empCode, empName }: IncidentBadgeProps) {
-  const [incidents, setIncidents] = useState<HRIncident[] | null>(null);
+export default function IncidentBadge({ incidents, empName }: IncidentBadgeProps) {
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<PopupPos>({ top: 0, left: 0 });
   const btnRef = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    if (!empCode) return;
-    fetch(`/api/incidents?empCode=${empCode}`, { cache: "no-store" })
-      .then((r) => r.json())
-      .then((res) => { if (res.success) setIncidents(res.data); })
-      .catch(() => setIncidents([]));
-  }, [empCode]);
 
   // Close on outside click or scroll
   useEffect(() => {
@@ -44,8 +35,6 @@ export default function IncidentBadge({ empCode, empName }: IncidentBadgeProps) 
     e.stopPropagation();
     if (!btnRef.current) return;
     const rect = btnRef.current.getBoundingClientRect();
-    // Position popup below the button, aligned to its left edge
-    // If too close to right edge, shift left
     const popupWidth = 400;
     let left = rect.left;
     if (left + popupWidth > window.innerWidth - 16) {
@@ -53,10 +42,6 @@ export default function IncidentBadge({ empCode, empName }: IncidentBadgeProps) 
     }
     setPos({ top: rect.bottom + 6, left });
     setOpen((v) => !v);
-  }
-
-  if (incidents === null) {
-    return <span className="inline-block w-6 h-5 bg-gray-100 rounded animate-pulse" />;
   }
 
   const total = incidents.length;

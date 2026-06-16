@@ -8,12 +8,13 @@ import {
   fetchUtilizationData,
   fetchAuditData,
   fetchNegativeFeedbackData,
+  fetchIncidentData,
 } from "@/lib/rms-auth";
-import { Employee, EmployeeCategory, FinalStatus, FeedbackEntry, PIPStatus, NREntry, UtilizationEntry, AuditEntry } from "@/types/employee";
+import { Employee, EmployeeCategory, FinalStatus, FeedbackEntry, PIPStatus, NREntry, UtilizationEntry, AuditEntry, HRIncident } from "@/types/employee";
 import { computeTenureDays, inferMilestone, isoToApiDate, todayAsApiDate, cleanFeedbackText, cleanResignationDate, parseDateOfFb } from "@/lib/utils";
 import { classifyFeedbackQuality } from "@/lib/openai";
 
-const CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
+const CACHE_TTL_MS = 60 * 60 * 1000; // 60 minutes
 
 let schemaReady = false;
 async function ensureSchema() {
@@ -55,7 +56,7 @@ export const getEmployees = cache(async function getEmployees(category?: Employe
     // NR, Utilization, Enquiry-Audit, and Negative-Feedback sync independently — run even
     // if employee sync failed, using whatever employees are already in the DB
     try {
-      await Promise.all([syncNR(db, now), syncUtilization(db, now), syncAudit(db, now), syncNegFeedback(db, now)]);
+      await Promise.all([syncNR(db, now), syncUtilization(db, now), syncAudit(db, now), syncNegFeedback(db, now), syncIncidents(db, now)]);
     } catch (err) {
       console.warn("NR/Utilization/Audit/NegFeedback sync failed:", err);
     }
@@ -283,26 +284,29 @@ async function syncNR(db: ReturnType<typeof getTursoClient>, now: number) {
     args: [],
   });
 
-  await Promise.allSettled(
+  const results = await Promise.allSettled(
     rows.rows.map(async (r) => {
       const empCode = parseInt((r.employee_id as string).replace(/\D/g, ""), 10);
-      try {
-        const raw = await fetchNRData(empCode);
-        const parseM = (m: string) => { const [mon, yr] = m.split("-"); return new Date(`${mon} 1, ${yr}`).getTime(); };
-        const data = raw
-          .map((rec) => ({ month: rec.month, val: rec.TotalNR }))
-          .sort((a, b) => parseM(b.month) - parseM(a.month))
-          .slice(0, 3);
-        await db.execute({ sql: "DELETE FROM nr_data WHERE employee_id = ?", args: [String(empCode)] });
-        for (const entry of data) {
-          await db.execute({
-            sql: "INSERT INTO nr_data (employee_id, month, val, cached_at) VALUES (?, ?, ?, ?)",
-            args: [String(empCode), entry.month, entry.val, now],
-          });
-        }
-      } catch { /* non-fatal — skip this employee */ }
+      const raw = await fetchNRData(empCode);
+      const parseM = (m: string) => { const [mon, yr] = m.split("-"); return new Date(`${mon} 1, ${yr}`).getTime(); };
+      const data = raw
+        .map((rec) => ({ month: rec.month, val: rec.TotalNR }))
+        .sort((a, b) => parseM(b.month) - parseM(a.month))
+        .slice(0, 3);
+      return { empCode: String(empCode), data };
     })
   );
+
+  const stmts: WriteStmt[] = [];
+  for (const res of results) {
+    if (res.status !== "fulfilled") continue;
+    const { empCode, data } = res.value;
+    stmts.push({ sql: "DELETE FROM nr_data WHERE employee_id = ?", args: [empCode] });
+    for (const entry of data) {
+      stmts.push({ sql: "INSERT INTO nr_data (employee_id, month, val, cached_at) VALUES (?, ?, ?, ?)", args: [empCode, entry.month, entry.val, now] });
+    }
+  }
+  await batchWrites(db, stmts);
 }
 
 async function syncUtilization(db: ReturnType<typeof getTursoClient>, now: number) {
@@ -311,21 +315,24 @@ async function syncUtilization(db: ReturnType<typeof getTursoClient>, now: numbe
     args: [],
   });
 
-  await Promise.allSettled(
+  const results = await Promise.allSettled(
     rows.rows.map(async (r) => {
       const empCode = parseInt((r.employee_id as string).replace(/\D/g, ""), 10);
-      try {
-        const raw = await fetchUtilizationData(empCode);
-        await db.execute({ sql: "DELETE FROM utilization WHERE employee_id = ?", args: [String(empCode)] });
-        for (const rec of raw) {
-          await db.execute({
-            sql: "INSERT INTO utilization (employee_id, month, val, cached_at) VALUES (?, ?, ?, ?)",
-            args: [String(empCode), rec.MonthName, rec.Utilization, now],
-          });
-        }
-      } catch { /* non-fatal — skip this employee */ }
+      const raw = await fetchUtilizationData(empCode);
+      return { empCode: String(empCode), raw };
     })
   );
+
+  const stmts: WriteStmt[] = [];
+  for (const res of results) {
+    if (res.status !== "fulfilled") continue;
+    const { empCode, raw } = res.value;
+    stmts.push({ sql: "DELETE FROM utilization WHERE employee_id = ?", args: [empCode] });
+    for (const rec of raw) {
+      stmts.push({ sql: "INSERT INTO utilization (employee_id, month, val, cached_at) VALUES (?, ?, ?, ?)", args: [empCode, rec.MonthName, rec.Utilization, now] });
+    }
+  }
+  await batchWrites(db, stmts);
 }
 
 // Enquiry Audit Report (Sales only). Bulk API with no emp code in records — match by
@@ -412,6 +419,43 @@ async function syncNegFeedback(db: ReturnType<typeof getTursoClient>, now: numbe
   await batchWrites(db, stmts);
 }
 
+// HR Incidents (all employees). Per-empCode lookup; filters to only incidents
+// on/after the employee's DOJ so pre-join records from prior tenure don't appear.
+async function syncIncidents(db: ReturnType<typeof getTursoClient>, now: number) {
+  const rows = await db.execute({ sql: "SELECT employee_id, doj FROM employees", args: [] });
+
+  const results = await Promise.allSettled(
+    rows.rows.map(async (r) => {
+      const empId = r.employee_id as string;
+      const empCode = parseInt(empId.replace(/\D/g, ""), 10);
+      const doj = (r.doj as string) ?? "";
+      const raw = await fetchIncidentData(empCode);
+      const incidents: HRIncident[] = raw
+        .map((rec) => ({
+          type: (rec.IncidentType === "Positive Incident" ? "pos" : "neg") as HRIncident["type"],
+          comment: rec.Reason ?? "",
+          date: (rec.IncidentDate ?? "").split("T")[0],
+        }))
+        .filter((inc) => !doj || inc.date >= doj);
+      return { empCode: String(empCode), incidents };
+    })
+  );
+
+  const stmts: WriteStmt[] = [];
+  for (const res of results) {
+    if (res.status !== "fulfilled") continue;
+    const { empCode, incidents } = res.value;
+    stmts.push({ sql: "DELETE FROM hr_incidents WHERE employee_id = ?", args: [empCode] });
+    for (const inc of incidents) {
+      stmts.push({
+        sql: "INSERT INTO hr_incidents (employee_id, type, comment, date, cached_at) VALUES (?, ?, ?, ?, ?)",
+        args: [empCode, inc.type, inc.comment, inc.date, now],
+      });
+    }
+  }
+  await batchWrites(db, stmts);
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // AI classification — runs after each sync for records with quality IS NULL
 // ─────────────────────────────────────────────────────────────────────────────
@@ -475,12 +519,13 @@ async function readEmployees(db: ReturnType<typeof getTursoClient>, category?: E
     args: category ? [category] : [],
   });
 
-  // Fetch feedback, NR, utilization, and audit entries in parallel
-  const [fbRows, nrRows, utilRows, auditRows] = await Promise.all([
+  // Fetch feedback, NR, utilization, audit entries, and incidents in parallel
+  const [fbRows, nrRows, utilRows, auditRows, incidentRows] = await Promise.all([
     db.execute({ sql: "SELECT employee_id, milestone, rating, comment, area_of_strength, area_of_improvement, posted_on, quality FROM feedback", args: [] }),
     db.execute({ sql: "SELECT employee_id, month, val FROM nr_data", args: [] }),
     db.execute({ sql: "SELECT employee_id, month, val FROM utilization", args: [] }),
     db.execute({ sql: "SELECT employee_id, audit_date, rating, remark FROM audit_entries ORDER BY id", args: [] }),
+    db.execute({ sql: "SELECT employee_id, type, comment, date FROM hr_incidents ORDER BY date DESC", args: [] }),
   ]);
 
   const feedbackMap = new Map<string, Map<string, FeedbackEntry>>();
@@ -524,6 +569,18 @@ async function readEmployees(db: ReturnType<typeof getTursoClient>, category?: E
     });
   }
 
+  // hr_incidents keyed by EMP-prefixed id (stored as numeric empCode, join on empCode)
+  const incidentMap = new Map<string, HRIncident[]>();
+  for (const r of incidentRows.rows) {
+    const empId = `EMP${r.employee_id}`;
+    if (!incidentMap.has(empId)) incidentMap.set(empId, []);
+    incidentMap.get(empId)!.push({
+      type:    (r.type as HRIncident["type"]),
+      comment: (r.comment as string) ?? "",
+      date:    (r.date as string) ?? "",
+    });
+  }
+
   return empRows.rows.map((r) => {
     const eid = r.employee_id as string;
     const doj = r.doj as string;
@@ -559,7 +616,7 @@ async function readEmployees(db: ReturnType<typeof getTursoClient>, category?: E
       nrData,
       utilization,
       pipStatus,
-      hrIncidents: [],
+      hrIncidents: incidentMap.get(eid) ?? [],
       finalStatus: (r.final_status as string) as FinalStatus,
       hrRemarks:   (r.hr_remarks as string | null) ?? null,
       resigned:          !!(r.dor as string),

@@ -58,6 +58,13 @@ export default async function OverviewPage({ searchParams }: PageProps) {
     return true;
   });
 
+  const resignedCount = all.filter((e) => {
+    if (!e.resigned)           return false;
+    if (from && e.doj < from) return false;
+    if (to   && e.doj > to)   return false;
+    return true;
+  }).length;
+
   const { overall, teamStats, tenure } = buildStats(employees);
 
   const statusList = [...employees]
@@ -83,7 +90,7 @@ export default async function OverviewPage({ searchParams }: PageProps) {
 
         {/* Left panel */}
         <div className="col-span-2 space-y-4">
-          <KPICards stats={overall} />
+          <KPICards stats={overall} resigned={resignedCount} />
           <Charts overall={overall} teams={teamStats} tenure={tenure} />
         </div>
 

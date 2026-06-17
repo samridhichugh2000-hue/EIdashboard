@@ -23,9 +23,17 @@ export async function GET() {
         return acc;
       }, {} as Record<string, unknown[]>);
 
+    // Department breakdown
+    const deptCount: Record<string, number> = {};
+    for (const r of records) {
+      const dept = (r["Department"] as string) || "(none)";
+      deptCount[dept] = (deptCount[dept] ?? 0) + 1;
+    }
+
     return NextResponse.json({
       dateRange: { from, to: toDate },
       totalRecords: records.length,
+      departmentBreakdown: deptCount,
       allFieldKeys: allKeys,
       statusLikeFields,
       sampleRecords: records.slice(0, 5),

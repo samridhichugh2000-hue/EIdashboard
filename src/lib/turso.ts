@@ -103,6 +103,16 @@ export async function initSchema() {
       cached_at INTEGER NOT NULL
     );
 
+    CREATE TABLE IF NOT EXISTS trainer_skills (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      employee_id TEXT NOT NULL,
+      course_id INTEGER,
+      course_name TEXT,
+      is_duplicate INTEGER NOT NULL DEFAULT 0,
+      is_discontinue INTEGER NOT NULL DEFAULT 0,
+      cached_at INTEGER NOT NULL
+    );
+
     CREATE TABLE IF NOT EXISTS token_cache (
       id INTEGER PRIMARY KEY,
       access_token TEXT NOT NULL,

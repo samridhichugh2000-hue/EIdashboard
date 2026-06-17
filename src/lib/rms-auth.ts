@@ -176,8 +176,8 @@ async function getTrainerSkillAuthTokens(): Promise<TokenResponse> {
   return { accessToken: trainerSkillTokenCache.accessToken, deviceToken: trainerSkillTokenCache.deviceToken };
 }
 
-// Trainer Skills API — apikey=217, bulk call (empty body returns all trainers' skills)
-export async function fetchTrainerSkillData(): Promise<RawTrainerSkill[]> {
+// Trainer Skills API — apikey=217, per-empCode call (same pattern as assignments)
+export async function fetchTrainerSkillData(empCode: number): Promise<RawTrainerSkill[]> {
   const { accessToken, deviceToken } = await getTrainerSkillAuthTokens();
   const encodedToken = encodeURIComponent(accessToken);
 
@@ -185,7 +185,7 @@ export async function fetchTrainerSkillData(): Promise<RawTrainerSkill[]> {
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({}),
+    body: JSON.stringify({ employee_id: empCode }),
     cache: "no-store",
   });
 
@@ -199,7 +199,12 @@ export async function fetchTrainerSkillData(): Promise<RawTrainerSkill[]> {
 }
 
 export interface RawTrainerSkill {
-  [key: string]: unknown; // filled in after we see the real API response
+  employee_code: number;
+  employee_name: string | null;
+  course_id: number | null;
+  course_name: string | null;
+  is_duplicate_course: boolean;
+  is_discontinue_course: boolean;
 }
 
 // Separate token cache for the Trainer Assignments API (role="Get Trainer Negative Feedback")

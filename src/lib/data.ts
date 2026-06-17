@@ -8,9 +8,10 @@ import {
   fetchUtilizationData,
   fetchAuditData,
   fetchTrainerAssignmentData,
+  fetchTrainerSkillData,
   fetchIncidentData,
 } from "@/lib/rms-auth";
-import { Employee, EmployeeCategory, FinalStatus, FeedbackEntry, PIPStatus, NREntry, UtilizationEntry, AuditEntry, HRIncident, TrainerAssignment } from "@/types/employee";
+import { Employee, EmployeeCategory, FinalStatus, FeedbackEntry, PIPStatus, NREntry, UtilizationEntry, AuditEntry, HRIncident, TrainerAssignment, TrainerSkill } from "@/types/employee";
 import { computeTenureDays, inferMilestone, isoToApiDate, todayAsApiDate, cleanFeedbackText, cleanResignationDate, parseDateOfFb } from "@/lib/utils";
 import { classifyFeedbackQuality } from "@/lib/openai";
 
@@ -46,9 +47,9 @@ export async function forceSync(): Promise<void> {
   }
 
   try {
-    await Promise.all([syncNR(db, now), syncUtilization(db, now), syncAudit(db, now), syncTrainerAssignments(db, now), syncIncidents(db, now)]);
+    await Promise.all([syncNR(db, now), syncUtilization(db, now), syncAudit(db, now), syncTrainerAssignments(db, now), syncTrainerSkills(db, now), syncIncidents(db, now)]);
   } catch (err) {
-    console.warn("forceSync: NR/util/audit/assignments/incidents sync failed:", err);
+    console.warn("forceSync: NR/util/audit/assignments/skills/incidents sync failed:", err);
   }
 }
 
@@ -80,9 +81,9 @@ export const getEmployees = cache(async function getEmployees(category?: Employe
     // NR, Utilization, Enquiry-Audit, and Negative-Feedback sync independently — run even
     // if employee sync failed, using whatever employees are already in the DB
     try {
-      await Promise.all([syncNR(db, now), syncUtilization(db, now), syncAudit(db, now), syncTrainerAssignments(db, now), syncIncidents(db, now)]);
+      await Promise.all([syncNR(db, now), syncUtilization(db, now), syncAudit(db, now), syncTrainerAssignments(db, now), syncTrainerSkills(db, now), syncIncidents(db, now)]);
     } catch (err) {
-      console.warn("NR/Utilization/Audit/NegFeedback sync failed:", err);
+      console.warn("NR/Utilization/Audit/Assignments/Skills/Incidents sync failed:", err);
     }
   }
 
@@ -446,6 +447,37 @@ async function syncTrainerAssignments(db: ReturnType<typeof getTursoClient>, now
   await batchWrites(db, stmts);
 }
 
+// Trainer Skills (Trainer only). Per-empCode lookup; returns courses marked in RMS.
+async function syncTrainerSkills(db: ReturnType<typeof getTursoClient>, now: number) {
+  const rows = await db.execute({
+    sql: "SELECT employee_id FROM employees WHERE category = 'trainer'",
+    args: [],
+  });
+
+  const results = await Promise.allSettled(
+    rows.rows.map(async (r) => {
+      const empCode = (r.employee_id as string).replace(/\D/g, "");
+      const raw = await fetchTrainerSkillData(parseInt(empCode, 10));
+      return { empCode, raw };
+    })
+  );
+
+  const stmts: WriteStmt[] = [];
+  for (const res of results) {
+    if (res.status !== "fulfilled") continue;
+    const { empCode, raw } = res.value;
+    stmts.push({ sql: "DELETE FROM trainer_skills WHERE employee_id = ?", args: [empCode] });
+    for (const rec of raw) {
+      stmts.push({
+        sql: `INSERT INTO trainer_skills (employee_id, course_id, course_name, is_duplicate, is_discontinue, cached_at)
+              VALUES (?, ?, ?, ?, ?, ?)`,
+        args: [empCode, rec.course_id ?? null, rec.course_name ?? null, rec.is_duplicate_course ? 1 : 0, rec.is_discontinue_course ? 1 : 0, now],
+      });
+    }
+  }
+  await batchWrites(db, stmts);
+}
+
 // HR Incidents (all employees). Per-empCode lookup; filters to only incidents
 // on/after the employee's DOJ so pre-join records from prior tenure don't appear.
 async function syncIncidents(db: ReturnType<typeof getTursoClient>, now: number) {
@@ -546,14 +578,15 @@ async function readEmployees(db: ReturnType<typeof getTursoClient>, category?: E
     args: category ? [category] : [],
   });
 
-  // Fetch feedback, NR, utilization, audit entries, incidents, and trainer assignments in parallel
-  const [fbRows, nrRows, utilRows, auditRows, incidentRows, assignmentRows] = await Promise.all([
+  // Fetch feedback, NR, utilization, audit entries, incidents, trainer assignments and skills in parallel
+  const [fbRows, nrRows, utilRows, auditRows, incidentRows, assignmentRows, skillRows] = await Promise.all([
     db.execute({ sql: "SELECT employee_id, milestone, rating, comment, area_of_strength, area_of_improvement, posted_on, quality FROM feedback", args: [] }),
     db.execute({ sql: "SELECT employee_id, month, val FROM nr_data", args: [] }),
     db.execute({ sql: "SELECT employee_id, month, val FROM utilization", args: [] }),
     db.execute({ sql: "SELECT employee_id, audit_date, rating, remark FROM audit_entries ORDER BY id", args: [] }),
     db.execute({ sql: "SELECT employee_id, type, comment, date FROM hr_incidents ORDER BY date DESC", args: [] }),
     db.execute({ sql: "SELECT employee_id, assignment_id, client_name, client_id, sc_id, start_date, end_date, delivery_mode, feedback_id, feedback_date, feedback_question, feedback_answer FROM trainer_assignments ORDER BY start_date DESC", args: [] }),
+    db.execute({ sql: "SELECT employee_id, course_id, course_name, is_duplicate, is_discontinue FROM trainer_skills ORDER BY course_name", args: [] }),
   ]);
 
   const feedbackMap = new Map<string, Map<string, FeedbackEntry>>();
@@ -606,6 +639,19 @@ async function readEmployees(db: ReturnType<typeof getTursoClient>, category?: E
       type:    (r.type as HRIncident["type"]),
       comment: (r.comment as string) ?? "",
       date:    (r.date as string) ?? "",
+    });
+  }
+
+  // trainer_skills keyed by numeric empCode
+  const skillMap = new Map<string, TrainerSkill[]>();
+  for (const r of skillRows.rows) {
+    const code = r.employee_id as string;
+    if (!skillMap.has(code)) skillMap.set(code, []);
+    skillMap.get(code)!.push({
+      courseId:     r.course_id as number | null,
+      courseName:   (r.course_name as string | null),
+      isDuplicate:  Boolean(r.is_duplicate),
+      isDiscontinue: Boolean(r.is_discontinue),
     });
   }
 
@@ -673,6 +719,7 @@ async function readEmployees(db: ReturnType<typeof getTursoClient>, category?: E
       auditCount:        Number(r.audit_count ?? 0),
       audits:            auditMap.get(eid) ?? [],
       trainerAssignments: assignmentMap.get(empCode) ?? [],
+      trainerSkills:      skillMap.get(empCode) ?? [],
     };
   });
 }

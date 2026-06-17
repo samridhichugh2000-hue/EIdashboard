@@ -40,6 +40,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       auditCount:        Number(r.audit_count ?? 0),
       audits:            [],
       trainerAssignments: [],
+      trainerSkills: [],
     };
 
     return NextResponse.json({ success: true, data: employee });

@@ -40,6 +40,13 @@ export interface AuditEntry {
   remark: string | null;
 }
 
+export interface TrainerSkill {
+  courseId: number | null;
+  courseName: string | null;
+  isDuplicate: boolean;
+  isDiscontinue: boolean;
+}
+
 export interface TrainerAssignment {
   assignmentId: string | null;
   clientName: string | null;
@@ -79,6 +86,7 @@ export interface Employee {
   auditCount: number;                 // Sales only: enquiry audits matched by name since DOJ
   audits: AuditEntry[];               // Sales only: the matched audit entries (for drill-down)
   trainerAssignments: TrainerAssignment[];  // Trainer only: assignments with client feedback
+  trainerSkills: TrainerSkill[];            // Trainer only: skills/courses marked in RMS
 }
 
 export interface OverviewStats {

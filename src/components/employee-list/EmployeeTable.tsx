@@ -11,6 +11,7 @@ import IncidentBadge from "@/components/IncidentBadge";
 import AuditBadge from "@/components/AuditBadge";
 import HRActionButton from "@/components/HRActionButton";
 import AssignmentBadge from "@/components/AssignmentBadge";
+import SkillsBadge from "@/components/SkillsBadge";
 
 
 interface EmployeeTableProps { employees: Employee[]; }
@@ -561,7 +562,8 @@ export default function EmployeeTable({ employees }: EmployeeTableProps) {
   const showUtil  = category === "trainer";
   const showAudit = category === "sales";   // Enquiry-audit count column — Sales only
   const showAssignments = category === "trainer"; // Assignments count column — Trainer only
-  const extraCols = ((showNR || showUtil) ? 3 : 0) + (showAudit ? 1 : 0) + (showAssignments ? 1 : 0);
+  const showSkills      = category === "trainer"; // Skills Marked column — Trainer only
+  const extraCols = ((showNR || showUtil) ? 3 : 0) + (showAudit ? 1 : 0) + (showAssignments ? 1 : 0) + (showSkills ? 1 : 0);
 
   const tableScrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft,  setCanScrollLeft]  = useState(false);
@@ -714,6 +716,7 @@ export default function EmployeeTable({ employees }: EmployeeTableProps) {
               <th className="px-3 py-3 text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wide">HR Incidents</th>
               {showAudit && <th className="px-3 py-3 text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wide">Audit</th>}
               {showAssignments && <th className="px-3 py-3 text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wide">Assignments</th>}
+              {showSkills && <th className="px-3 py-3 text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wide">Skills Marked</th>}
               <th className="px-3 py-3 text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wide">Feedback Alert</th>
               {(showNR || showUtil) && <>
                 <th className="px-3 py-3 text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wide">Month 1</th>
@@ -786,6 +789,11 @@ export default function EmployeeTable({ employees }: EmployeeTableProps) {
                   {showAssignments && (
                     <td className="px-3 py-2.5">
                       <AssignmentBadge assignments={emp.trainerAssignments} empName={emp.name} />
+                    </td>
+                  )}
+                  {showSkills && (
+                    <td className="px-3 py-2.5">
+                      <SkillsBadge skills={emp.trainerSkills} empName={emp.name} />
                     </td>
                   )}
                   <td className="px-3 py-2.5">

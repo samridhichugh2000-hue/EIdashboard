@@ -1,4 +1,4 @@
-﻿import { Employee } from "@/types/employee";
+import { Employee } from "@/types/employee";
 
 export const MOCK_EMPLOYEES: Employee[] = [
   {
@@ -28,7 +28,7 @@ export const MOCK_EMPLOYEES: Employee[] = [
     lastWorkingDay: null,
     auditCount: 0,
     audits: [],
-    trainerAssignments: [],
+    trainerAssignments: [], trainerSkills: [],
   },
   {
     employeeId: "EMP3958",
@@ -57,7 +57,7 @@ export const MOCK_EMPLOYEES: Employee[] = [
     lastWorkingDay: null,
     auditCount: 0,
     audits: [],
-    trainerAssignments: [],
+    trainerAssignments: [], trainerSkills: [],
   },
   {
     employeeId: "EMP3933",
@@ -84,7 +84,7 @@ export const MOCK_EMPLOYEES: Employee[] = [
     lastWorkingDay: null,
     auditCount: 0,
     audits: [],
-    trainerAssignments: [],
+    trainerAssignments: [], trainerSkills: [],
   },
   {
     employeeId: "EMP3953",
@@ -115,7 +115,7 @@ export const MOCK_EMPLOYEES: Employee[] = [
     lastWorkingDay: null,
     auditCount: 0,
     audits: [],
-    trainerAssignments: [],
+    trainerAssignments: [], trainerSkills: [],
   },
   {
     employeeId: "EMP3906",
@@ -145,6 +145,6 @@ export const MOCK_EMPLOYEES: Employee[] = [
     lastWorkingDay: null,
     auditCount: 0,
     audits: [],
-    trainerAssignments: [],
+    trainerAssignments: [], trainerSkills: [],
   },
 ];

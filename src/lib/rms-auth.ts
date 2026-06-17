@@ -186,7 +186,7 @@ export async function fetchTrainerAssignmentData(empCode: number): Promise<RawTr
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ employee_id: `EMP${empCode}` }),
+    body: JSON.stringify({ employee_id: empCode }),
     cache: "no-store",
   });
 

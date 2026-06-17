@@ -142,67 +142,77 @@ export interface RawAuditRecord {
   client_email_adress: string | null; // (sic) API misspells "address"
 }
 
-// Separate token cache for the Negative Feedback Count API (role="Get Negative Feedback Count")
-let negFeedbackTokenCache: (TokenResponse & { expiresAt: number }) | null = null;
+// Separate token cache for the Trainer Assignments API (role="Get Trainer Negative Feedback")
+let trainerAssignmentTokenCache: (TokenResponse & { expiresAt: number }) | null = null;
 
-async function getNegFeedbackAuthTokens(): Promise<TokenResponse> {
+async function getTrainerAssignmentAuthTokens(): Promise<TokenResponse> {
   const now = Date.now();
-  if (negFeedbackTokenCache && negFeedbackTokenCache.expiresAt > now) {
-    return { accessToken: negFeedbackTokenCache.accessToken, deviceToken: negFeedbackTokenCache.deviceToken };
+  if (trainerAssignmentTokenCache && trainerAssignmentTokenCache.expiresAt > now) {
+    return { accessToken: trainerAssignmentTokenCache.accessToken, deviceToken: trainerAssignmentTokenCache.deviceToken };
   }
 
   const res = await fetch(`${BASE_URL}/api/Kites/Operator/GetToken`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      userName: process.env.RMS_NEGFB_USERNAME || "Samridhi_GetNegativeFeed",
-      userPassword: process.env.RMS_NEGFB_PASSWORD || "s!rCp!2YsYn#",
-      userRole: process.env.RMS_NEGFB_ROLE || "Get Negative Feedback Count",
+      userName: process.env.RMS_TRAINER_ASSIGN_USERNAME || "Samridhi_GetTrainerNegat",
+      userPassword: process.env.RMS_TRAINER_ASSIGN_PASSWORD || "EXy8#8MwxY9G",
+      userRole: process.env.RMS_TRAINER_ASSIGN_ROLE || "Get Trainer Negative Feedback",
     }),
     cache: "no-store",
   });
 
-  if (!res.ok) throw new Error(`GetToken (neg-feedback) failed: ${res.status}`);
+  if (!res.ok) throw new Error(`GetToken (trainer-assignments) failed: ${res.status}`);
 
   const data = await res.json();
-  if (data.statuscode !== 200) throw new Error(`GetToken (neg-feedback) error: ${data.message}`);
+  if (data.statuscode !== 200) throw new Error(`GetToken (trainer-assignments) error: ${data.message}`);
 
-  negFeedbackTokenCache = {
+  trainerAssignmentTokenCache = {
     accessToken: data.content.accessToken,
     deviceToken: data.content.deviceToken,
     expiresAt: now + TOKEN_TTL_MS,
   };
 
-  return { accessToken: negFeedbackTokenCache.accessToken, deviceToken: negFeedbackTokenCache.deviceToken };
+  return { accessToken: trainerAssignmentTokenCache.accessToken, deviceToken: trainerAssignmentTokenCache.deviceToken };
 }
 
-// Negative Feedback Count API — apikey=58, per-email lookup (Trainer-only).
-// Returns one row per trainer profile sharing that email; Trainer is "Name;<empCode>".
-export async function fetchNegativeFeedbackData(email: string): Promise<RawNegFeedbackRecord[]> {
-  const { accessToken, deviceToken } = await getNegFeedbackAuthTokens();
+// Trainer Assignments API — apikey=218, per-empCode call (Trainer-only).
+// Returns assignments with associated client feedback data.
+export async function fetchTrainerAssignmentData(empCode: number): Promise<RawTrainerAssignment[]> {
+  const { accessToken, deviceToken } = await getTrainerAssignmentAuthTokens();
   const encodedToken = encodeURIComponent(accessToken);
 
-  const url = `${BASE_URL}/api/Kites/Operator/common?apikey=58&accessToken=${encodedToken}&deviceToken=${deviceToken}`;
+  const url = `${BASE_URL}/api/Kites/Operator/common?apikey=218&accessToken=${encodedToken}&deviceToken=${deviceToken}`;
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email }),
+    body: JSON.stringify({ employee_id: String(empCode) }),
     cache: "no-store",
   });
 
-  if (!res.ok) throw new Error(`Negative Feedback API failed: ${res.status}`);
+  if (!res.ok) throw new Error(`Trainer Assignments API failed: ${res.status}`);
 
   const data = await res.json();
-  if (data.statuscode !== 200) throw new Error(`Negative Feedback API error: ${data.message}`);
+  if (data.statuscode !== 200) throw new Error(`Trainer Assignments API error: ${data.message}`);
 
   const content = typeof data.content === "string" ? JSON.parse(data.content) : data.content;
-  return (content ?? []) as RawNegFeedbackRecord[];
+  return (content ?? []) as RawTrainerAssignment[];
 }
 
-export interface RawNegFeedbackRecord {
-  Trainer: string | null;  // "Name;<empCode>"
-  Email: string | null;
-  Total: number | null;    // count of negative feedbacks
+export interface RawTrainerAssignment {
+  client_name: string | null;
+  client_ID: string | null;
+  trainer_name: string | null;
+  csm_name: string | null;
+  sc_id: string | null;
+  feedback_id: string | null;
+  feedback_date: string | null;
+  feedback_question: string | null;
+  feedback_answer: string | null;
+  assignment_start_date: string | null;
+  assignment_end_date: string | null;
+  assignment_delivery_mode: string | null;
+  assignment_id: string | null;
 }
 
 export async function fetchFeedbackData(startDate: string, endDate: string, employeeName = "") {

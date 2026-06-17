@@ -92,9 +92,9 @@ function UtilCol({ entry }: { entry: UtilizationEntry | undefined }) {
   return <span className={color}>{entry.month}<br />{entry.val.toFixed(1)}%</span>;
 }
 
-function CountCell({ count, tone }: { count: number; tone: "amber" | "red" }) {
+function CountCell({ count, tone }: { count: number; tone: "amber" | "red" | "blue" }) {
   if (!count) return <span className="text-gray-300">—</span>;
-  const cls = tone === "red" ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700";
+  const cls = tone === "red" ? "bg-red-100 text-red-700" : tone === "blue" ? "bg-blue-100 text-blue-700" : "bg-amber-100 text-amber-700";
   return <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-semibold ${cls}`}>{count}</span>;
 }
 
@@ -215,14 +215,14 @@ function TrainerTable({ employees, incidentMap }: { employees: Employee[]; incid
         <tr className="bg-[#1E99C0] text-white text-left">
           {COMMON_HEADERS}
           <TH right>Util M1</TH><TH right>Util M2</TH><TH right>Util M3</TH>
-          <TH>Neg. FB</TH>
+          <TH>Assignments</TH>
           <TH>Final Status</TH><TH>HR Remarks</TH><TH>Closed</TH>
         </tr>
       </thead>
       <tbody>
         {employees.map((emp, i) => (
           <EmpRow key={emp.employeeId} emp={emp} incidents={incidentMap.get(emp.employeeId) ?? []} i={i}
-            extraCells={<><TD right><UtilCol entry={emp.utilization[0]} /></TD><TD right><UtilCol entry={emp.utilization[1]} /></TD><TD right><UtilCol entry={emp.utilization[2]} /></TD><TD center><CountCell count={emp.negFeedbackCount} tone="red" /></TD></>}
+            extraCells={<><TD right><UtilCol entry={emp.utilization[0]} /></TD><TD right><UtilCol entry={emp.utilization[1]} /></TD><TD right><UtilCol entry={emp.utilization[2]} /></TD><TD center><CountCell count={emp.trainerAssignments.length} tone="blue" /></TD></>}
           />
         ))}
       </tbody>

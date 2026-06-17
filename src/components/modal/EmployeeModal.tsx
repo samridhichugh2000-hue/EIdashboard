@@ -1,6 +1,6 @@
 "use client";
 
-import { Employee, FeedbackEntry, HRIncident, NREntry, PIPStatus, UtilizationEntry } from "@/types/employee";
+import { Employee, FeedbackEntry, HRIncident, NREntry, PIPStatus, TrainerAssignment, UtilizationEntry } from "@/types/employee";
 import { formatDate, getTenureBadgeClass, getStatusChipClass, formatIndianNumber, cleanFeedbackText, getFeedbackQuality } from "@/lib/utils";
 import { useEffect, useState } from "react";
 
@@ -171,6 +171,21 @@ export default function EmployeeModal({ employee, onClose }: EmployeeModalProps)
             </Section>
           )}
 
+          {/* Trainer Assignments */}
+          {employee.category === "trainer" && (
+            <Section title="Trainer Assignments">
+              {employee.trainerAssignments.length === 0 ? (
+                <p className="text-sm text-gray-400 italic">No assignments recorded</p>
+              ) : (
+                <div className="space-y-2">
+                  {employee.trainerAssignments.map((a, i) => (
+                    <AssignmentCard key={i} assignment={a} />
+                  ))}
+                </div>
+              )}
+            </Section>
+          )}
+
           {/* PA/PIP */}
           <Section title="PA / PIP Status">
             {pipData === undefined ? (
@@ -260,6 +275,28 @@ function FeedbackMilestone({ label, entry, tenureDays, minDays }: {
       </div>
       <p className="text-sm text-gray-700 whitespace-pre-line">{cleanFeedbackText(entry.comment)}</p>
       {entry.postedOn && <p className="text-xs text-gray-400 mt-1">Shared: {entry.postedOn}</p>}
+    </div>
+  );
+}
+
+function AssignmentCard({ assignment: a }: { assignment: TrainerAssignment }) {
+  const period = [a.startDate, a.endDate].filter(Boolean).join(" → ") || "Dates N/A";
+  return (
+    <div className="px-4 py-3 rounded-lg border border-blue-100 bg-blue-50 text-sm">
+      <div className="flex items-center justify-between mb-1">
+        <span className="font-semibold text-blue-800">{a.clientName ?? "Client N/A"}</span>
+        <span className="text-xs text-blue-500">{period}</span>
+      </div>
+      <div className="flex flex-wrap gap-2 text-xs text-gray-500 mb-1">
+        {a.deliveryMode && <span className="bg-white border border-blue-100 px-2 py-0.5 rounded-full">{a.deliveryMode}</span>}
+        {a.scId && <span className="bg-white border border-blue-100 px-2 py-0.5 rounded-full">SC: {a.scId}</span>}
+      </div>
+      {a.feedbackAnswer && (
+        <div className="mt-1.5 pt-1.5 border-t border-blue-100">
+          {a.feedbackQuestion && <p className="text-[11px] text-gray-400 mb-0.5">{a.feedbackQuestion}</p>}
+          <p className="text-gray-700">{a.feedbackAnswer}</p>
+        </div>
+      )}
     </div>
   );
 }

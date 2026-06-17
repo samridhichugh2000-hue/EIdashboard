@@ -39,7 +39,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       lastWorkingDay:    (r.lwd as string) || null,
       auditCount:        Number(r.audit_count ?? 0),
       audits:            [],
-      negFeedbackCount:  Number(r.neg_feedback_count ?? 0),
+      trainerAssignments: [],
     };
 
     return NextResponse.json({ success: true, data: employee });

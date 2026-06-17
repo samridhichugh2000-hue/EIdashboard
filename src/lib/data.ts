@@ -7,10 +7,10 @@ import {
   fetchNRData,
   fetchUtilizationData,
   fetchAuditData,
-  fetchNegativeFeedbackData,
+  fetchTrainerAssignmentData,
   fetchIncidentData,
 } from "@/lib/rms-auth";
-import { Employee, EmployeeCategory, FinalStatus, FeedbackEntry, PIPStatus, NREntry, UtilizationEntry, AuditEntry, HRIncident } from "@/types/employee";
+import { Employee, EmployeeCategory, FinalStatus, FeedbackEntry, PIPStatus, NREntry, UtilizationEntry, AuditEntry, HRIncident, TrainerAssignment } from "@/types/employee";
 import { computeTenureDays, inferMilestone, isoToApiDate, todayAsApiDate, cleanFeedbackText, cleanResignationDate, parseDateOfFb } from "@/lib/utils";
 import { classifyFeedbackQuality } from "@/lib/openai";
 
@@ -56,7 +56,7 @@ export const getEmployees = cache(async function getEmployees(category?: Employe
     // NR, Utilization, Enquiry-Audit, and Negative-Feedback sync independently — run even
     // if employee sync failed, using whatever employees are already in the DB
     try {
-      await Promise.all([syncNR(db, now), syncUtilization(db, now), syncAudit(db, now), syncNegFeedback(db, now), syncIncidents(db, now)]);
+      await Promise.all([syncNR(db, now), syncUtilization(db, now), syncAudit(db, now), syncTrainerAssignments(db, now), syncIncidents(db, now)]);
     } catch (err) {
       console.warn("NR/Utilization/Audit/NegFeedback sync failed:", err);
     }
@@ -390,31 +390,34 @@ async function syncAudit(db: ReturnType<typeof getTursoClient>, now: number) {
   await batchWrites(db, stmts);
 }
 
-// Negative Feedback Count (Trainer only). Per-email lookup; the API returns one row per
-// trainer profile sharing that email, with Trainer = "Name;<empCode>". Match the row whose
-// embedded emp code equals the dashboard employee so a shared email's other profile isn't counted.
-async function syncNegFeedback(db: ReturnType<typeof getTursoClient>, now: number) {
+// Trainer Assignments (Trainer only). Per-empCode lookup; returns assignments with client feedback.
+async function syncTrainerAssignments(db: ReturnType<typeof getTursoClient>, now: number) {
   const rows = await db.execute({
-    sql: "SELECT employee_id, email FROM employees WHERE category = 'trainer' AND email != ''",
+    sql: "SELECT employee_id FROM employees WHERE category = 'trainer'",
     args: [],
   });
 
   const results = await Promise.allSettled(
     rows.rows.map(async (r) => {
-      const empId = r.employee_id as string;
-      const empCode = empId.replace(/\D/g, "");
-      const recs = await fetchNegativeFeedbackData(r.email as string);
-      const total = recs
-        .filter((rec) => (rec.Trainer ?? "").split(";").pop()?.trim() === empCode)
-        .reduce((sum, rec) => sum + (Number(rec.Total) || 0), 0);
-      return { empId, total };
+      const empCode = (r.employee_id as string).replace(/\D/g, "");
+      const raw = await fetchTrainerAssignmentData(parseInt(empCode, 10));
+      return { empCode, raw };
     })
   );
 
   const stmts: WriteStmt[] = [];
   for (const res of results) {
-    if (res.status !== "fulfilled") continue; // skip failures — keep existing count
-    stmts.push({ sql: "UPDATE employees SET neg_feedback_count = ? WHERE employee_id = ?", args: [res.value.total, res.value.empId] });
+    if (res.status !== "fulfilled") continue;
+    const { empCode, raw } = res.value;
+    stmts.push({ sql: "DELETE FROM trainer_assignments WHERE employee_id = ?", args: [empCode] });
+    for (const rec of raw) {
+      stmts.push({
+        sql: `INSERT INTO trainer_assignments
+              (employee_id, assignment_id, client_name, client_id, sc_id, start_date, end_date, delivery_mode, feedback_id, feedback_date, feedback_question, feedback_answer, cached_at)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        args: [empCode, rec.assignment_id ?? null, rec.client_name ?? null, rec.client_ID ?? null, rec.sc_id ?? null, rec.assignment_start_date ?? null, rec.assignment_end_date ?? null, rec.assignment_delivery_mode ?? null, rec.feedback_id ?? null, rec.feedback_date ?? null, rec.feedback_question ?? null, rec.feedback_answer ?? null, now],
+      });
+    }
   }
   await batchWrites(db, stmts);
 }
@@ -519,13 +522,14 @@ async function readEmployees(db: ReturnType<typeof getTursoClient>, category?: E
     args: category ? [category] : [],
   });
 
-  // Fetch feedback, NR, utilization, audit entries, and incidents in parallel
-  const [fbRows, nrRows, utilRows, auditRows, incidentRows] = await Promise.all([
+  // Fetch feedback, NR, utilization, audit entries, incidents, and trainer assignments in parallel
+  const [fbRows, nrRows, utilRows, auditRows, incidentRows, assignmentRows] = await Promise.all([
     db.execute({ sql: "SELECT employee_id, milestone, rating, comment, area_of_strength, area_of_improvement, posted_on, quality FROM feedback", args: [] }),
     db.execute({ sql: "SELECT employee_id, month, val FROM nr_data", args: [] }),
     db.execute({ sql: "SELECT employee_id, month, val FROM utilization", args: [] }),
     db.execute({ sql: "SELECT employee_id, audit_date, rating, remark FROM audit_entries ORDER BY id", args: [] }),
     db.execute({ sql: "SELECT employee_id, type, comment, date FROM hr_incidents ORDER BY date DESC", args: [] }),
+    db.execute({ sql: "SELECT employee_id, assignment_id, client_name, client_id, sc_id, start_date, end_date, delivery_mode, feedback_id, feedback_date, feedback_question, feedback_answer FROM trainer_assignments ORDER BY start_date DESC", args: [] }),
   ]);
 
   const feedbackMap = new Map<string, Map<string, FeedbackEntry>>();
@@ -581,6 +585,26 @@ async function readEmployees(db: ReturnType<typeof getTursoClient>, category?: E
     });
   }
 
+  // trainer_assignments keyed by numeric empCode
+  const assignmentMap = new Map<string, TrainerAssignment[]>();
+  for (const r of assignmentRows.rows) {
+    const code = r.employee_id as string;
+    if (!assignmentMap.has(code)) assignmentMap.set(code, []);
+    assignmentMap.get(code)!.push({
+      assignmentId:    (r.assignment_id as string | null),
+      clientName:      (r.client_name as string | null),
+      clientId:        (r.client_id as string | null),
+      scId:            (r.sc_id as string | null),
+      startDate:       (r.start_date as string | null),
+      endDate:         (r.end_date as string | null),
+      deliveryMode:    (r.delivery_mode as string | null),
+      feedbackId:      (r.feedback_id as string | null),
+      feedbackDate:    (r.feedback_date as string | null),
+      feedbackQuestion:(r.feedback_question as string | null),
+      feedbackAnswer:  (r.feedback_answer as string | null),
+    });
+  }
+
   return empRows.rows.map((r) => {
     const eid = r.employee_id as string;
     const doj = r.doj as string;
@@ -624,7 +648,7 @@ async function readEmployees(db: ReturnType<typeof getTursoClient>, category?: E
       lastWorkingDay:    (r.lwd as string) || null,
       auditCount:        Number(r.audit_count ?? 0),
       audits:            auditMap.get(eid) ?? [],
-      negFeedbackCount:  Number(r.neg_feedback_count ?? 0),
+      trainerAssignments: assignmentMap.get(empCode) ?? [],
     };
   });
 }

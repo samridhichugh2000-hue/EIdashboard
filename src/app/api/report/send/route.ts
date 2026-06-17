@@ -66,9 +66,11 @@ function utilCell(entry: Employee["utilization"][0] | undefined): string {
   return `<span style="color:${color}">${entry.month}<br/>${entry.val.toFixed(1)}%</span>`;
 }
 
-function countCell(count: number, tone: "amber" | "red"): string {
+function countCell(count: number, tone: "amber" | "red" | "blue"): string {
   if (!count) return `<span style="color:#d1d5db;">—</span>`;
-  return tone === "red" ? badge(String(count), C.red, "#fee2e2") : badge(String(count), C.amber, "#fef3c7");
+  if (tone === "red")  return badge(String(count), C.red,   "#fee2e2");
+  if (tone === "blue") return badge(String(count), "#1d4ed8", "#dbeafe");
+  return badge(String(count), C.amber, "#fef3c7");
 }
 
 function formatDate(iso: string): string {
@@ -183,7 +185,7 @@ function buildEmailHtml(
   const pt      = sortByPriority(reportPool.filter(e => e.category === "pt"));
 
   const salesRows   = sales.map((e, i) => commonRow(e, incidentMap.get(e.employeeId) ?? [], i, `${td(nrCell(e.nrData[0]), "right")}${td(nrCell(e.nrData[1]), "right")}${td(nrCell(e.nrData[2]), "right")}${td(countCell(e.auditCount, "amber"), "center")}`)).join("");
-  const trainerRows = trainer.map((e, i) => commonRow(e, incidentMap.get(e.employeeId) ?? [], i, `${td(utilCell(e.utilization[0]), "right")}${td(utilCell(e.utilization[1]), "right")}${td(utilCell(e.utilization[2]), "right")}${td(countCell(e.negFeedbackCount, "red"), "center")}`)).join("");
+  const trainerRows = trainer.map((e, i) => commonRow(e, incidentMap.get(e.employeeId) ?? [], i, `${td(utilCell(e.utilization[0]), "right")}${td(utilCell(e.utilization[1]), "right")}${td(utilCell(e.utilization[2]), "right")}${td(countCell(e.trainerAssignments.length, "blue"), "center")}`)).join("");
   const ptRows      = pt.map((e, i) => commonRow(e, incidentMap.get(e.employeeId) ?? [], i, "")).join("");
 
   return `<!DOCTYPE html>

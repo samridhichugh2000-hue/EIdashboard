@@ -40,6 +40,20 @@ export interface AuditEntry {
   remark: string | null;
 }
 
+export interface TrainerAssignment {
+  assignmentId: string | null;
+  clientName: string | null;
+  clientId: string | null;
+  scId: string | null;
+  startDate: string | null;
+  endDate: string | null;
+  deliveryMode: string | null;
+  feedbackId: string | null;
+  feedbackDate: string | null;
+  feedbackQuestion: string | null;
+  feedbackAnswer: string | null;
+}
+
 export interface Employee {
   employeeId: string;
   name: string;
@@ -64,7 +78,7 @@ export interface Employee {
   lastWorkingDay: string | null;      // ISO "YYYY-MM-DD" or null
   auditCount: number;                 // Sales only: enquiry audits matched by name since DOJ
   audits: AuditEntry[];               // Sales only: the matched audit entries (for drill-down)
-  negFeedbackCount: number;           // Trainer only: negative feedback count (matched by email + emp code)
+  trainerAssignments: TrainerAssignment[];  // Trainer only: assignments with client feedback
 }
 
 export interface OverviewStats {

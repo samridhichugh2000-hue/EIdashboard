@@ -179,7 +179,7 @@ async function getTrainerAssignmentAuthTokens(): Promise<TokenResponse> {
 // Trainer Assignments API — apikey=218, per-empCode call (Trainer-only).
 // Returns assignments with associated client feedback data.
 export async function fetchTrainerAssignmentData(empCode: number): Promise<RawTrainerAssignment[]> {
-  const { accessToken, deviceToken } = await getTrainerAssignmentAuthTokens();
+  const { accessToken, deviceToken } = await getAuthTokens();
   const encodedToken = encodeURIComponent(accessToken);
 
   const url = `${BASE_URL}/api/Kites/Operator/common?apikey=218&accessToken=${encodedToken}&deviceToken=${deviceToken}`;

@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
+import { getAuthTokens } from "@/lib/rms-auth";
 
 const BASE_URL = "https://api.koenig-solutions.com";
 
 export const dynamic = "force-dynamic";
 
-async function getToken() {
+async function getSkillToken() {
   const res = await fetch(`${BASE_URL}/api/Kites/Operator/GetToken`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -15,36 +16,41 @@ async function getToken() {
     }),
     cache: "no-store",
   });
-  if (!res.ok) throw new Error(`GetToken failed: ${res.status}`);
+  if (!res.ok) throw new Error(`GetToken (skill) failed: ${res.status}`);
   const d = await res.json();
-  if (d.statuscode !== 200) throw new Error(`GetToken error: ${JSON.stringify(d)}`);
+  if (d.statuscode !== 200) throw new Error(`GetToken (skill) error: ${JSON.stringify(d)}`);
   return { accessToken: d.content.accessToken, deviceToken: d.content.deviceToken };
+}
+
+async function callApi(accessToken: string, deviceToken: string, body: string) {
+  const encodedToken = encodeURIComponent(accessToken);
+  const url = `${BASE_URL}/api/Kites/Operator/common?apikey=217&accessToken=${encodedToken}&deviceToken=${deviceToken}`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body,
+    cache: "no-store",
+  });
+  const rawText = await res.text();
+  let parsed: unknown;
+  try { parsed = JSON.parse(rawText); } catch { parsed = rawText; }
+  return { http_status: res.status, raw_response: parsed };
 }
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
-  const bodyParam = searchParams.get("body") ?? "{}"; // e.g. ?body={"emp_code":4006}
+  const bodyParam = searchParams.get("body") ?? "{}";
 
   try {
-    const { accessToken, deviceToken } = await getToken();
-    const encodedToken = encodeURIComponent(accessToken);
-    const url = `${BASE_URL}/api/Kites/Operator/common?apikey=217&accessToken=${encodedToken}&deviceToken=${deviceToken}`;
+    // Try 1: dedicated skill token
+    const skillTokens = await getSkillToken();
+    const withSkillToken = await callApi(skillTokens.accessToken, skillTokens.deviceToken, bodyParam);
 
-    const res = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: bodyParam,
-      cache: "no-store",
-    });
+    // Try 2: main auth token (Sakshipandey — worked for assignments)
+    const mainTokens = await getAuthTokens();
+    const withMainToken = await callApi(mainTokens.accessToken, mainTokens.deviceToken, bodyParam);
 
-    const rawText = await res.text();
-    let parsed: unknown;
-    try { parsed = JSON.parse(rawText); } catch { parsed = rawText; }
-
-    return NextResponse.json({
-      http_status: res.status,
-      raw_response: parsed,
-    });
+    return NextResponse.json({ withSkillToken, withMainToken });
   } catch (err) {
     return NextResponse.json({ error: String(err) }, { status: 500 });
   }

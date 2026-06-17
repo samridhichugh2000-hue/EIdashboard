@@ -142,6 +142,66 @@ export interface RawAuditRecord {
   client_email_adress: string | null; // (sic) API misspells "address"
 }
 
+// Separate token cache for the Trainer Skills API (role="Get Trainer Skills")
+let trainerSkillTokenCache: (TokenResponse & { expiresAt: number }) | null = null;
+
+async function getTrainerSkillAuthTokens(): Promise<TokenResponse> {
+  const now = Date.now();
+  if (trainerSkillTokenCache && trainerSkillTokenCache.expiresAt > now) {
+    return { accessToken: trainerSkillTokenCache.accessToken, deviceToken: trainerSkillTokenCache.deviceToken };
+  }
+
+  const res = await fetch(`${BASE_URL}/api/Kites/Operator/GetToken`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      userName: "Samridhi_GetTrainerSkill",
+      userPassword: "AYZTd73aeC!M",
+      userRole: "Get Trainer Skills",
+    }),
+    cache: "no-store",
+  });
+
+  if (!res.ok) throw new Error(`GetToken (trainer-skills) failed: ${res.status}`);
+
+  const data = await res.json();
+  if (data.statuscode !== 200) throw new Error(`GetToken (trainer-skills) error: ${data.message}`);
+
+  trainerSkillTokenCache = {
+    accessToken: data.content.accessToken,
+    deviceToken: data.content.deviceToken,
+    expiresAt: now + TOKEN_TTL_MS,
+  };
+
+  return { accessToken: trainerSkillTokenCache.accessToken, deviceToken: trainerSkillTokenCache.deviceToken };
+}
+
+// Trainer Skills API — apikey=217, bulk call (empty body returns all trainers' skills)
+export async function fetchTrainerSkillData(): Promise<RawTrainerSkill[]> {
+  const { accessToken, deviceToken } = await getTrainerSkillAuthTokens();
+  const encodedToken = encodeURIComponent(accessToken);
+
+  const url = `${BASE_URL}/api/Kites/Operator/common?apikey=217&accessToken=${encodedToken}&deviceToken=${deviceToken}`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({}),
+    cache: "no-store",
+  });
+
+  if (!res.ok) throw new Error(`Trainer Skills API failed: ${res.status}`);
+
+  const data = await res.json();
+  if (data.statuscode !== 200) throw new Error(`Trainer Skills API error: ${data.message}`);
+
+  const content = typeof data.content === "string" ? JSON.parse(data.content) : data.content;
+  return (content ?? []) as RawTrainerSkill[];
+}
+
+export interface RawTrainerSkill {
+  [key: string]: unknown; // filled in after we see the real API response
+}
+
 // Separate token cache for the Trainer Assignments API (role="Get Trainer Negative Feedback")
 let trainerAssignmentTokenCache: (TokenResponse & { expiresAt: number }) | null = null;
 

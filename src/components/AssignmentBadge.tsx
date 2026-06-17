@@ -18,10 +18,14 @@ export default function AssignmentBadge({ assignments, empName }: AssignmentBadg
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<PopupPos>({ top: 0, left: 0 });
   const btnRef = useRef<HTMLButtonElement>(null);
+  const popupRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!open) return;
-    const close = () => setOpen(false);
+    const close = (e: Event) => {
+      if (popupRef.current?.contains(e.target as Node)) return;
+      setOpen(false);
+    };
     document.addEventListener("mousedown", close);
     document.addEventListener("scroll", close, true);
     return () => {
@@ -47,6 +51,7 @@ export default function AssignmentBadge({ assignments, empName }: AssignmentBadg
 
   const popup = open && total > 0 && (
     <div
+      ref={popupRef}
       onMouseDown={(e) => e.stopPropagation()}
       style={{ position: "fixed", top: pos.top, left: pos.left, width: 420, zIndex: 9999 }}
       className="bg-white border border-gray-200 rounded-xl shadow-2xl overflow-hidden"

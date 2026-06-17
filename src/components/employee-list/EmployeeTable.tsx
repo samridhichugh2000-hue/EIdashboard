@@ -376,7 +376,7 @@ const FILTER_DEFS = [
   },
   {
     key:   "in_progress"      as const,
-    label: "In Progress",
+    label: "Being Monitored",
     match: (e: Employee) => e.finalStatus === "In Progress",
     off:   "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100",
     on:    "bg-blue-500 text-white border-blue-500",
@@ -602,7 +602,7 @@ export default function EmployeeTable({ employees }: EmployeeTableProps) {
   const STATUS_CARDS = [
     { key: "total",            label: "Total",               match: null,                                           value: employeeList.length,                                              solidBg: "bg-[#7C3AED]" },
     { key: "confirmed",        label: "Closed",              match: (e: Employee) => e.finalStatus === "Confirmed", value: employeeList.filter(e => e.finalStatus === "Confirmed").length,   solidBg: "bg-[#059669]" },
-    { key: "in_progress",      label: "In Progress",         match: (e: Employee) => e.finalStatus === "In Progress", value: employeeList.filter(e => e.finalStatus === "In Progress").length, solidBg: "bg-[#4F46E5]" },
+    { key: "in_progress",      label: "Being Monitored",     match: (e: Employee) => e.finalStatus === "In Progress", value: employeeList.filter(e => e.finalStatus === "In Progress").length, solidBg: "bg-[#4F46E5]" },
     { key: "pa_issued",        label: "PA Issued",           match: (e: Employee) => e.finalStatus === "PA Issued", value: employeeList.filter(e => e.finalStatus === "PA Issued").length,   solidBg: "bg-[#D97706]" },
     { key: "pip_issued",       label: "PIP Issued",          match: (e: Employee) => e.finalStatus === "PIP Issued", value: employeeList.filter(e => e.finalStatus === "PIP Issued").length,  solidBg: "bg-[#DC2626]" },
     { key: "below",            label: "Below Satisfactory",  match: (e: Employee) => hasBelowSatisfactory(e),       value: employeeList.filter(hasBelowSatisfactory).length,                 solidBg: "bg-[#BE185D]" },

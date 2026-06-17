@@ -93,7 +93,7 @@ export default function EmployeeStatusPanel({ employees }: { employees: Employee
 
                   {/* Status badge */}
                   <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border shrink-0 ml-2 ${style.bg} ${style.text} ${style.border}`}>
-                    {emp.finalStatus === "In Progress" ? "Active" : emp.finalStatus}
+                    {emp.finalStatus === "In Progress" ? "Being Monitored" : emp.finalStatus}
                   </span>
                 </div>
               );

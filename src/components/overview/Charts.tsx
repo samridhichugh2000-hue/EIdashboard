@@ -44,7 +44,7 @@ interface ChartsProps {
 export default function Charts({ overall, teams, tenure }: ChartsProps) {
   const pieData = [
     { name: "Not to be monitored", value: overall.confirmed, color: PALETTE.closed },
-    { name: "In Progress", value: overall.inProgress,  color: PALETTE.inProgress },
+    { name: "Being Monitored", value: overall.inProgress,  color: PALETTE.inProgress },
     { name: "PA Issued",   value: overall.paIssued,    color: PALETTE.paIssued   },
     { name: "PIP Issued",  value: overall.pipIssued,   color: PALETTE.pipIssued  },
   ];
@@ -58,7 +58,7 @@ export default function Charts({ overall, teams, tenure }: ChartsProps) {
   const stackData = teams.map(t => ({
     name:          t.label,
     "Not to be monitored": t.confirmed,
-    "In Progress": t.inProgress,
+    "Being Monitored": t.inProgress,
     "PA Issued":   t.paIssued,
     "PIP Issued":  t.pipIssued,
     total:         t.total,
@@ -142,7 +142,7 @@ export default function Charts({ overall, teams, tenure }: ChartsProps) {
               />
               <Legend iconType="circle" iconSize={7} wrapperStyle={{ fontSize: 11, color: "#6B7280" }} />
               <Bar dataKey="Not to be monitored" stackId="a" fill={PALETTE.closed} />
-              <Bar dataKey="In Progress"  stackId="a" fill={PALETTE.inProgress} />
+              <Bar dataKey="Being Monitored"  stackId="a" fill={PALETTE.inProgress} />
               <Bar dataKey="PA Issued"    stackId="a" fill={PALETTE.paIssued}   />
               <Bar dataKey="PIP Issued"   stackId="a" fill={PALETTE.pipIssued} radius={[4, 4, 0, 0]} />
               {/* Zero-height invisible bar just to anchor the total label on top */}

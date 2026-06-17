@@ -6,7 +6,7 @@ export default function StatsRow({ stats }: StatsRowProps) {
   const items = [
     { label: "Total",       value: stats.total,      accent: "bg-[#28C5BE]",  text: "text-[#1E99C0]"  },
     { label: "Confirmed",   value: stats.confirmed,   accent: "bg-teal-400",   text: "text-teal-700"   },
-    { label: "In Progress", value: stats.inProgress,  accent: "bg-blue-400",   text: "text-blue-700"   },
+    { label: "Being Monitored", value: stats.inProgress,  accent: "bg-blue-400",   text: "text-blue-700"   },
     { label: "PA Issued",   value: stats.paIssued,    accent: "bg-amber-400",  text: "text-amber-700"  },
     { label: "PIP Issued",  value: stats.pipIssued,   accent: "bg-red-400",    text: "text-red-700"    },
   ];

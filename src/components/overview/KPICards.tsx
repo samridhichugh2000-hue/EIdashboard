@@ -2,7 +2,7 @@ import { OverviewStats } from "@/types/employee";
 
 const BREAKDOWNS = [
   { key: "confirmed"  as const, label: "Not to be monitored", dot: "bg-emerald-500", num: "text-emerald-700", bg: "bg-emerald-50"  },
-  { key: "inProgress" as const, label: "In Progress",          dot: "bg-violet-500",  num: "text-violet-700",  bg: "bg-violet-50"   },
+  { key: "inProgress" as const, label: "Being Monitored",      dot: "bg-violet-500",  num: "text-violet-700",  bg: "bg-violet-50"   },
   { key: "paIssued"   as const, label: "PA Issued",            dot: "bg-amber-500",   num: "text-amber-700",   bg: "bg-amber-50"    },
   { key: "pipIssued"  as const, label: "PIP Issued",           dot: "bg-red-500",     num: "text-red-700",     bg: "bg-red-50"      },
 ];

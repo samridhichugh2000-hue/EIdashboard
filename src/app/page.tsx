@@ -3,10 +3,10 @@ export const dynamic = "force-dynamic";
 import { Suspense } from "react";
 import { OverviewStats, TeamStats, Employee } from "@/types/employee";
 import KPICards from "@/components/overview/KPICards";
-
 import Charts from "@/components/overview/Charts";
 import DateRangeFilter from "@/components/DateRangeFilter";
 import EmployeeStatusPanel from "@/components/overview/EmployeeStatusPanel";
+import RedFlags, { RedFlagItem } from "@/components/overview/RedFlags";
 import { getTenureBand, categoryLabel, categoryIcon } from "@/lib/utils";
 import { getEmployees } from "@/lib/data";
 
@@ -38,6 +38,61 @@ function buildStats(employees: Employee[]) {
   return { overall, teamStats, tenure };
 }
 
+// "17 Jun 2026" → "2026-06-17" for ISO comparison
+function auditDateToISO(d: string): string {
+  try {
+    return new Date(d).toISOString().split("T")[0];
+  } catch {
+    return "";
+  }
+}
+
+function buildRedFlags(employees: Employee[]) {
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - 30);
+  const cutoffISO = cutoff.toISOString().split("T")[0];
+
+  const trainerNegIncident: RedFlagItem[] = [];
+  const trainerZeroSkills:  RedFlagItem[] = [];
+  const trainerZeroAssignments: RedFlagItem[] = [];
+  const salesNegAudit: RedFlagItem[] = [];
+
+  for (const e of employees) {
+    if (e.category === "trainer") {
+      // Recent negative HR incident
+      const recentNeg = e.hrIncidents
+        .filter((i) => i.type === "neg" && i.date >= cutoffISO)
+        .sort((a, b) => b.date.localeCompare(a.date));
+      if (recentNeg.length > 0) {
+        trainerNegIncident.push({ employeeId: e.employeeId, name: e.name, detail: recentNeg[0].date });
+      }
+
+      // 0 active skills with tenure ≥ 30d
+      const activeSkills = e.trainerSkills.filter((s) => !s.isDiscontinue).length;
+      if (activeSkills === 0 && e.tenureDays >= 30) {
+        trainerZeroSkills.push({ employeeId: e.employeeId, name: e.name, detail: `${e.tenureDays}d` });
+      }
+
+      // 0 assignments with tenure ≥ 30d
+      if (e.trainerAssignments.length === 0 && e.tenureDays >= 30) {
+        trainerZeroAssignments.push({ employeeId: e.employeeId, name: e.name, detail: `${e.tenureDays}d` });
+      }
+    }
+
+    if (e.category === "sales") {
+      // Below Satisfactory audit in last 30 days
+      const recentBad = e.audits
+        .filter((a) => a.rating === "Below Satisfactory" && auditDateToISO(a.date) >= cutoffISO)
+        .sort((a, b) => auditDateToISO(b.date).localeCompare(auditDateToISO(a.date)));
+      if (recentBad.length > 0) {
+        salesNegAudit.push({ employeeId: e.employeeId, name: e.name, detail: recentBad[0].date });
+      }
+    }
+  }
+
+  return { trainerNegIncident, trainerZeroSkills, trainerZeroAssignments, salesNegAudit };
+}
+
 const STATUS_ORDER: Record<string, number> = {
   "PIP Issued": 0,
   "PA Issued":  1,
@@ -66,6 +121,7 @@ export default async function OverviewPage({ searchParams }: PageProps) {
   }).length;
 
   const { overall, teamStats, tenure } = buildStats(employees);
+  const redFlags = buildRedFlags(employees);
 
   const statusList = [...employees]
     .filter((e) => e.finalStatus !== "Confirmed")
@@ -91,6 +147,7 @@ export default async function OverviewPage({ searchParams }: PageProps) {
         {/* Left panel */}
         <div className="col-span-2 space-y-4">
           <KPICards stats={overall} resigned={resignedCount} />
+          <RedFlags {...redFlags} />
           <Charts overall={overall} teams={teamStats} tenure={tenure} />
         </div>
 

@@ -64,18 +64,18 @@ function buildRedFlags(employees: Employee[]) {
         .filter((i) => i.type === "neg" && i.date >= cutoffISO)
         .sort((a, b) => b.date.localeCompare(a.date));
       if (recentNeg.length > 0) {
-        trainerNegIncident.push({ employeeId: e.employeeId, name: e.name, detail: recentNeg[0].date });
+        trainerNegIncident.push({ employee: e, detail: recentNeg[0].date });
       }
 
       // 0 active skills with tenure ≥ 30d
       const activeSkills = e.trainerSkills.filter((s) => !s.isDiscontinue).length;
       if (activeSkills === 0 && e.tenureDays >= 30) {
-        trainerZeroSkills.push({ employeeId: e.employeeId, name: e.name, detail: `${e.tenureDays}d` });
+        trainerZeroSkills.push({ employee: e, detail: `${e.tenureDays}d` });
       }
 
       // 0 assignments with tenure ≥ 30d
       if (e.trainerAssignments.length === 0 && e.tenureDays >= 30) {
-        trainerZeroAssignments.push({ employeeId: e.employeeId, name: e.name, detail: `${e.tenureDays}d` });
+        trainerZeroAssignments.push({ employee: e, detail: `${e.tenureDays}d` });
       }
     }
 
@@ -85,7 +85,7 @@ function buildRedFlags(employees: Employee[]) {
         .filter((a) => a.rating === "Below Satisfactory" && auditDateToISO(a.date) >= cutoffISO)
         .sort((a, b) => auditDateToISO(b.date).localeCompare(auditDateToISO(a.date)));
       if (recentBad.length > 0) {
-        salesNegAudit.push({ employeeId: e.employeeId, name: e.name, detail: recentBad[0].date });
+        salesNegAudit.push({ employee: e, detail: recentBad[0].date });
       }
     }
   }

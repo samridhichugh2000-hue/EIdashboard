@@ -448,33 +448,64 @@ async function syncTrainerAssignments(db: ReturnType<typeof getTursoClient>, now
 }
 
 // Trainer Skills (Trainer only). Per-empCode lookup; returns courses marked in RMS.
+// Skills are stable day-to-day, so we only re-fetch a trainer if their data is
+// older than 24 hours. We also batch calls (10 at a time) to avoid overwhelming
+// the Koenig API with 90+ concurrent requests, which causes silent timeouts.
+const SKILLS_TTL_MS = 24 * 60 * 60 * 1000;
+
 async function syncTrainerSkills(db: ReturnType<typeof getTursoClient>, now: number) {
   const rows = await db.execute({
     sql: "SELECT employee_id FROM employees WHERE category = 'trainer'",
     args: [],
   });
 
-  const results = await Promise.allSettled(
-    rows.rows.map(async (r) => {
-      const empCode = (r.employee_id as string).replace(/\D/g, "");
-      const raw = await fetchTrainerSkillData(parseInt(empCode, 10));
-      return { empCode, raw };
-    })
-  );
+  // Find freshest cached_at per trainer so we can skip recently-synced ones
+  const freshRows = await db.execute({
+    sql: "SELECT employee_id, MAX(cached_at) as latest FROM trainer_skills GROUP BY employee_id",
+    args: [],
+  });
+  const freshMap = new Map<string, number>();
+  for (const r of freshRows.rows) {
+    freshMap.set(r.employee_id as string, r.latest as number);
+  }
 
+  // Only fetch trainers whose data is stale or missing
+  const stale = rows.rows
+    .map((r) => (r.employee_id as string).replace(/\D/g, ""))
+    .filter((code) => {
+      const latest = freshMap.get(code) ?? 0;
+      return now - latest > SKILLS_TTL_MS;
+    });
+
+  if (stale.length === 0) return;
+
+  // Process in batches of 10 to avoid API rate-limiting
+  const BATCH = 10;
   const stmts: WriteStmt[] = [];
-  for (const res of results) {
-    if (res.status !== "fulfilled") continue;
-    const { empCode, raw } = res.value;
-    stmts.push({ sql: "DELETE FROM trainer_skills WHERE employee_id = ?", args: [empCode] });
-    for (const rec of raw) {
-      stmts.push({
-        sql: `INSERT INTO trainer_skills (employee_id, course_id, course_name, is_duplicate, is_discontinue, cached_at)
-              VALUES (?, ?, ?, ?, ?, ?)`,
-        args: [empCode, rec.course_id ?? null, rec.course_name ?? null, rec.is_duplicate_course ? 1 : 0, rec.is_discontinue_course ? 1 : 0, now],
-      });
+
+  for (let i = 0; i < stale.length; i += BATCH) {
+    const batch = stale.slice(i, i + BATCH);
+    const results = await Promise.allSettled(
+      batch.map(async (empCode) => {
+        const raw = await fetchTrainerSkillData(parseInt(empCode, 10));
+        return { empCode, raw };
+      })
+    );
+
+    for (const res of results) {
+      if (res.status !== "fulfilled") continue;
+      const { empCode, raw } = res.value;
+      stmts.push({ sql: "DELETE FROM trainer_skills WHERE employee_id = ?", args: [empCode] });
+      for (const rec of raw) {
+        stmts.push({
+          sql: `INSERT INTO trainer_skills (employee_id, course_id, course_name, is_duplicate, is_discontinue, cached_at)
+                VALUES (?, ?, ?, ?, ?, ?)`,
+          args: [empCode, rec.course_id ?? null, rec.course_name ?? null, rec.is_duplicate_course ? 1 : 0, rec.is_discontinue_course ? 1 : 0, now],
+        });
+      }
     }
   }
+
   await batchWrites(db, stmts);
 }
 

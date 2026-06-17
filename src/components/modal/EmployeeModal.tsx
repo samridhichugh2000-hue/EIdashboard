@@ -1,6 +1,6 @@
 "use client";
 
-import { Employee, FeedbackEntry, HRIncident, NREntry, PIPStatus, TrainerAssignment, UtilizationEntry } from "@/types/employee";
+import { Employee, FeedbackEntry, HRIncident, NREntry, PIPStatus, TrainerAssignment, TrainerSkill, UtilizationEntry } from "@/types/employee";
 import { formatDate, getTenureBadgeClass, getStatusChipClass, formatIndianNumber, cleanFeedbackText, getFeedbackQuality } from "@/lib/utils";
 import { useEffect, useState } from "react";
 
@@ -186,6 +186,17 @@ export default function EmployeeModal({ employee, onClose }: EmployeeModalProps)
             </Section>
           )}
 
+          {/* Trainer Skills */}
+          {employee.category === "trainer" && (
+            <Section title="Skills Marked">
+              {employee.trainerSkills.length === 0 ? (
+                <p className="text-sm text-gray-400 italic">No skills mapped</p>
+              ) : (
+                <SkillsList skills={employee.trainerSkills} />
+              )}
+            </Section>
+          )}
+
           {/* PA/PIP */}
           <Section title="PA / PIP Status">
             {pipData === undefined ? (
@@ -275,6 +286,39 @@ function FeedbackMilestone({ label, entry, tenureDays, minDays }: {
       </div>
       <p className="text-sm text-gray-700 whitespace-pre-line">{cleanFeedbackText(entry.comment)}</p>
       {entry.postedOn && <p className="text-xs text-gray-400 mt-1">Shared: {entry.postedOn}</p>}
+    </div>
+  );
+}
+
+function SkillsList({ skills }: { skills: TrainerSkill[] }) {
+  const active = skills.filter((s) => !s.isDiscontinue);
+  const discontinued = skills.filter((s) => s.isDiscontinue);
+  return (
+    <div className="space-y-1">
+      <p className="text-xs text-gray-400 mb-2">
+        {active.length} active{discontinued.length > 0 ? `, ${discontinued.length} discontinued` : ""}
+      </p>
+      {skills.map((s, i) => (
+        <div
+          key={i}
+          className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm ${
+            s.isDiscontinue
+              ? "bg-gray-50 border-gray-100 opacity-50"
+              : "bg-emerald-50 border-emerald-100"
+          }`}
+        >
+          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${s.isDiscontinue ? "bg-gray-400" : "bg-emerald-500"}`} />
+          <span className={`flex-1 ${s.isDiscontinue ? "line-through text-gray-400" : "text-gray-800"}`}>
+            {s.courseName ?? "—"}
+          </span>
+          {s.isDiscontinue && (
+            <span className="text-[10px] font-medium bg-gray-100 text-gray-400 px-1.5 py-0.5 rounded-full shrink-0">discontinued</span>
+          )}
+          {s.isDuplicate && !s.isDiscontinue && (
+            <span className="text-[10px] font-medium bg-amber-50 text-amber-500 px-1.5 py-0.5 rounded-full shrink-0">duplicate</span>
+          )}
+        </div>
+      ))}
     </div>
   );
 }

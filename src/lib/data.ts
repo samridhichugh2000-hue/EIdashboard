@@ -28,6 +28,30 @@ async function ensureSchema() {
 // Public API
 // ─────────────────────────────────────────────────────────────────────────────
 
+// Force a full sync regardless of cache age — used by the manual refresh button.
+export async function forceSync(): Promise<void> {
+  await ensureSchema();
+  const db = getTursoClient();
+  const now = Date.now();
+
+  let empIds: string[] = [];
+  try {
+    empIds = await syncEmployees(db, now);
+    await Promise.all([syncPIP(db, empIds, now), syncFeedback(db, now)]);
+    await classifyPendingFeedback(db).catch((err) =>
+      console.warn("OpenAI classification failed (non-fatal):", err)
+    );
+  } catch (err) {
+    console.warn("forceSync: employee/PIP/feedback sync failed:", err);
+  }
+
+  try {
+    await Promise.all([syncNR(db, now), syncUtilization(db, now), syncAudit(db, now), syncTrainerAssignments(db, now), syncIncidents(db, now)]);
+  } catch (err) {
+    console.warn("forceSync: NR/util/audit/assignments/incidents sync failed:", err);
+  }
+}
+
 // Single source of truth for all server components and API routes.
 // On cache miss: syncs employees → PIP/PA → feedback in parallel, then reads
 // everything back with JOINs so callers get fully-enriched Employee objects.
